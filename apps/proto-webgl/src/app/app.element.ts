@@ -335,3 +335,7 @@ document.getElementById('button').addEventListener('click', () => {
     (<HTMLInputElement>document.getElementById('ts')).value
   );
   if (tsChange !== null) {
+    console.log('change ts', tsChange);
+    getVideoByTs(tsChange);
+  }
+});
