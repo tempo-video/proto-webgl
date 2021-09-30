@@ -1,7 +1,123 @@
 {
   "version": 2,
-  "projects": {},
+  "projects": {
+    "proto-webgl": {
+      "projectType": "application",
+      "root": "apps/proto-webgl",
+      "sourceRoot": "apps/proto-webgl/src",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/web:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/proto-webgl",
+            "index": "apps/proto-webgl/src/index.html",
+            "main": "apps/proto-webgl/src/main.ts",
+            "polyfills": "apps/proto-webgl/src/polyfills.ts",
+            "tsConfig": "apps/proto-webgl/tsconfig.app.json",
+            "assets": [
+              "apps/proto-webgl/src/favicon.ico",
+              "apps/proto-webgl/src/assets"
+            ],
+            "styles": ["apps/proto-webgl/src/styles.scss"],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "apps/proto-webgl/src/environments/environment.ts",
+                  "with": "apps/proto-webgl/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "executor": "@nrwl/web:dev-server",
+          "options": {
+            "buildTarget": "proto-webgl:build"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "proto-webgl:build:production"
+            }
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/proto-webgl/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/proto-webgl"],
+          "options": {
+            "jestConfig": "apps/proto-webgl/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "proto-webgl-e2e": {
+      "root": "apps/proto-webgl-e2e",
+      "sourceRoot": "apps/proto-webgl-e2e/src",
+      "projectType": "application",
+      "targets": {
+        "e2e": {
+          "executor": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/proto-webgl-e2e/cypress.json",
+            "devServerTarget": "proto-webgl:serve",
+            "tsConfig": "apps/proto-webgl-e2e/tsconfig.json"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "proto-webgl:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/proto-webgl-e2e/**/*.{js,ts}"]
+          }
+        }
+      }
+    }
+  },
   "cli": {
-    "defaultCollection": "@nrwl/workspace"
+    "defaultCollection": "@nrwl/web"
+  },
+  "defaultProject": "proto-webgl",
+  "generators": {
+    "@nrwl/web:application": {
+      "style": "scss",
+      "linter": "eslint",
+      "unitTestRunner": "jest",
+      "e2eTestRunner": "cypress"
+    },
+    "@nrwl/web:library": {
+      "style": "scss",
+      "linter": "eslint",
+      "unitTestRunner": "jest"
+    }
   }
 }

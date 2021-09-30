@@ -1,0 +1,226 @@
+{
+  "editor": {
+    "audioCategories": [],
+    "audioModels": [],
+    "audioMuted": false,
+    "audioVolume": 100,
+    "clipboard": {
+      "mode": "copy",
+      "items": []
+    },
+    "elementCategories": [
+      {
+        "icon": "circle",
+        "id": "shape",
+        "modelIds": [
+          "square",
+          "circle"
+        ]
+      },
+      {
+        "icon": "emoji_emotions",
+        "id": "emoji",
+        "modelIds": []
+      },
+      {
+        "icon": "polymer",
+        "id": "brand",
+        "modelIds": [
+          "tempo-logo",
+          "coca-logo"
+        ]
+      },
+      {
+        "icon": "polymer",
+        "id": "user-owned",
+        "modelIds": []
+      }
+    ],
+    "elementModels": [
+      {
+        "categoryId": "shape",
+        "id": "square",
+        "nameId": "square",
+        "width": 32,
+        "height": 32,
+        "depth": 0
+      },
+      {
+        "categoryId": "shape",
+        "id": "circle",
+        "nameId": "circle",
+        "width": 32,
+        "height": 32,
+        "depth": 0
+      },
+      {
+        "categoryId": "brand",
+        "id": "tempo-logo",
+        "name": "Tempo",
+        "width": 298,
+        "height": 210,
+        "depth": 0
+      },
+      {
+        "categoryId": "brand",
+        "id": "coca-logo",
+        "name": "Coca-Cola",
+        "width": 614,
+        "height": 192,
+        "depth": 0
+      }
+    ],
+    "frameIndex": 0,
+    "fullScreen": false,
+    "loading": false,
+    "playbackPaused": true,
+    "playbackScale": 1,
+    "playbackSpeed": 1,
+    "sceneIndex": 0,
+    "selectedTrackItemIds": [],
+    "textModels": [
+      {
+        "id": "headline",
+        "nameId": "headline",
+        "style": {
+          "fontFamily": "Roboto",
+          "fontSize": "16pt",
+          "fontStyle": "normal",
+          "fontWeight": "bold",
+          "textColor": "rgba(0,0,0,1)",
+          "textTransform": "none"
+        }
+      },
+      {
+        "id": "regular",
+        "nameId": "regular",
+        "style": {
+          "fontFamily": "Roboto",
+          "fontSize": "14pt",
+          "fontStyle": "normal",
+          "fontWeight": "normal",
+          "textColor": "rgba(0,0,0,1)",
+          "textTransform": "none"
+        }
+      },
+      {
+        "id": "fun",
+        "nameId": "fun",
+        "style": {
+          "fontFamily": "Roboto",
+          "fontSize": "24pt",
+          "fontStyle": "italic",
+          "fontWeight": "normal",
+          "textColor": "rgba(255,0,0,1)",
+          "textDecoration": {
+            "line": "underline",
+            "style": "wavy",
+            "color": "rgba(255,127,0,0.5)",
+            "thickness": 2
+          },
+          "textTransform": "none"
+        }
+      }
+    ],
+    "timelineScale": 1,
+    "tracks": [
+      {
+        "type": "video",
+        "id": "3f0a7bfe-94b3-4a58-95ff-e72f3a30e8ea",
+        "label": "Video",
+        "itemIds": [
+          "a6a7e1aa-c53f-47cd-8832-2df473b27322",
+          "ede08c9d-2483-454d-8478-478c32cfc7d5",
+          "dd6a50d4-3f30-4007-a953-d9748b266462"
+        ]
+      }
+    ],
+    "trackItems": [
+      {
+        "duration": 6780,
+        "id": "a6a7e1aa-c53f-47cd-8832-2df473b27322",
+        "ts": 0,
+        "type": "video",
+        "transform": {
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        },
+        "videoId": "test-video3",
+        "videoOffset": 4000
+      },
+      {
+        "duration": 3500,
+        "id": "ede08c9d-2483-454d-8478-478c32cfc7d5",
+        "ts": 7500,
+        "type": "video",
+        "transform": {
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        },
+        "videoId": "test-video2",
+        "videoOffset": 6780
+      },
+      {
+        "duration": 3067,
+        "id": "dd6a50d4-3f30-4007-a953-d9748b266462",
+        "ts": 11180,
+        "type": "video",
+        "transform": {
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        },
+        "videoId": "5e329242-663e-4869-b76b-876a624039e5",
+        "videoOffset": 10280
+      }
+    ],
+    "trackOrder": [
+      "3f0a7bfe-94b3-4a58-95ff-e72f3a30e8ea"
+    ],
+    "videoAspect": "original",
+    "videoBackground": "rgba(0,0,0,1)",
+    "videoHeight": 1080,
+    "videoWidth": 1920,
+    "videoLoading": false,
+    "playbackDuration": 14247,
+    "playbackPosition": 0
+  }
+}
