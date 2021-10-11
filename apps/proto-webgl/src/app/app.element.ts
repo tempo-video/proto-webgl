@@ -1,6 +1,8 @@
+/* eslint-disable prefer-const */
 import './app.element.scss';
 import * as THREE from 'three';
 import * as data from '../assets/editor-state.json';
+import { rejects } from 'assert';
 
 export class AppElement extends HTMLElement {
   public static observedAttributes = [];
@@ -162,7 +164,30 @@ function animation() {
   renderer.render(scene, camera);
 }
 
-function getAllVideos() {
+function videoLoading(video) {
+  return new Promise((resolve, reject) => {
+    console.log('loading video n°' + video.src);
+    resolve(video.load());
+  })
+}
+
+function hideAllVideos() {
+  for (let i = 1; i < scene.children.length; i++) {
+    scene.children[i].visible = false;
+  }
+}
+
+function playVideo(video) {
+  return new Promise((resolve) => {
+    resolve(video.play());
+  })
+}
+
+function setATimeout(ms) {
+  return new Promise((resolve) => timeouts.push(setTimeout(resolve, ms)));
+}
+
+async function getAllVideos() {
   for (let i = 0; i < dataEditor.tracks[0].itemIds.length; i++) {
     let video = document.createElement('video');
     video.id = dataEditor.tracks[0].itemIds[i];
@@ -171,6 +196,7 @@ function getAllVideos() {
     );
     video.src = '../assets/' + videoSrc.videoId + '.mp4';
     document.getElementById('videos').appendChild(video);
+    await videoLoading(video);
   }
   addAllVideosThree();
 }
@@ -213,16 +239,13 @@ function addAllVideosThree() {
       videoData.transform.translation.y,
       0
     );
-
     scene.add(newMesh);
   }
   getVideoByTs(dataEditor.playbackPosition);
-  console.log('start timer now');
-  timestart = Date.now();
 }
 
-function getVideoByTs(ts) {
-  for (var i = 0; i < timeouts.length; i++) {
+async function getVideoByTs(ts) {
+  for (let i = 0; i < timeouts.length; i++) {
     clearTimeout(timeouts[i]);
   }
 
@@ -230,7 +253,7 @@ function getVideoByTs(ts) {
 
   let videosOnTs = [];
 
-  for (var i = 0; i < dataEditor.trackItems.length; i++) {
+  for (let i = 0; i < dataEditor.trackItems.length; i++) {
     let video = dataEditor.trackItems[i];
 
     let start = video.ts;
@@ -244,9 +267,11 @@ function getVideoByTs(ts) {
     afficheVideo(videosOnTs, ts);
   } else if (ts < dataEditor.playbackDuration) {
     console.log('pas de video a ce timestamp');
+
     hideAllVideos();
 
     let nextVideos = [];
+    
     for (let i = 0; i < dataEditor.trackItems.length; i++) {
       let video = dataEditor.trackItems[i];
       if (video.ts > ts) {
@@ -256,12 +281,9 @@ function getVideoByTs(ts) {
     if (nextVideos.length > 0 && videoPauseStatus) {
       let timeWithNoVideo = closest(ts, nextVideos) - ts;
 
-      const asyncFoo = async (ms) => {
-        await new Promise((resolve) => setTimeout(resolve, ms));
-        getVideoByTs(ts + ms + 1);
-      };
+      await setATimeout(timeWithNoVideo);
 
-      asyncFoo(timeWithNoVideo)
+      getVideoByTs(ts + timeWithNoVideo + 1);
 
       console.log('temps sans video', timeWithNoVideo);
     }
@@ -283,18 +305,10 @@ function closest(num, arr) {
   return curr;
 }
 
-function hideAllVideos() {
-  for (let i = 1; i < scene.children.length; i++) {
-    scene.children[i].visible = false;
-  }
-}
-
-function afficheVideo(videos, ts) {
+async function afficheVideo(videos, ts) {
   let videosElements = <HTMLVideoElement>document.getElementById(videos[0].id);
 
   let timeStartVideo: number = ts - videos[0].ts + videos[0].videoOffset;
-
-  videosElements.currentTime = timeStartVideo / 1000;
 
   let ThreeObject = scene.getObjectByName(videos[0].id);
 
@@ -302,31 +316,36 @@ function afficheVideo(videos, ts) {
 
   ThreeObject.visible = true;
 
-  if (videoPauseStatus && videosElements) {
-    let playPromise = videosElements.play();
+  try {
+    if (videoPauseStatus && videosElements) {
 
-    if (playPromise !== undefined) {
-      playPromise
-        .then((_) => {
-          console.log(
-            'affiche vidéo promise play, ts départ vidéo',
-            timeStartVideo
-          );
-          videosElements.currentTime = timeStartVideo / 1000;
-          let videoPlayDuration =
-            videos[0].videoOffset + videos[0].duration - timeStartVideo;
-          console.log('temps de lecture de la vidéo', videoPlayDuration);
-          timeouts.push(
-            setTimeout(function () {
-              getVideoByTs(ts + videoPlayDuration + 1);
-              videosElements.pause();
-            }, videoPlayDuration)
-          );
-        })
-        .catch((error) => {
-          console.log('play video error', error);
-        });
+      console.log(
+        'before promise play',
+        videosElements.paused
+      );
+
+      await playVideo(videosElements);
+
+      console.log(
+        'after promise play',
+        videosElements.paused
+      );
+
+      videosElements.currentTime = timeStartVideo / 1000;
+
+      let videoPlayDuration =
+        videos[0].videoOffset + videos[0].duration - timeStartVideo;
+
+      console.log('temps de lecture de la vidéo', videoPlayDuration);
+
+      await setATimeout(videoPlayDuration);
+
+      getVideoByTs(ts + videoPlayDuration + 1);
+      videosElements.pause();
     }
+  }
+  catch (error) {
+    console.log('play video error', error);
   }
 }
 
