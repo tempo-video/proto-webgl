@@ -1,6 +1,35 @@
 import './app.element.scss';
-import * as THREE from 'three';
+import {
+  TextureLoader,
+  Raycaster,
+  Scene,
+  Color,
+  Texture,
+  Vector2,
+  OrthographicCamera,
+  Mesh,
+  DoubleSide,
+  MeshBasicMaterial,
+  PlaneGeometry,
+  VideoTexture,
+  MathUtils,
+  CircleGeometry,
+  WebGLRenderer,
+  TextGeometry,
+  FontLoader,
+  Font,
+} from 'three';
 import * as data from '../assets/editor-state.json';
+import {
+  fromEvent,
+  Observable,
+  generate,
+  from,
+  forkJoin,
+  of,
+  firstValueFrom,
+} from 'rxjs';
+import { throttleTime, scan, map, defaultIfEmpty } from 'rxjs';
 
 export class AppElement extends HTMLElement {
   public static observedAttributes = [];
@@ -20,51 +49,78 @@ customElements.define('proto-webgl-root', AppElement);
 
 const dataEditor = data.editor;
 
-let videoPauseStatus = dataEditor.playbackPaused;
-
 let videoWidth, videoHeight;
 
 let camera, scene, renderer;
 
-let timeouts = [];
+interface LoadedTexture {
+  id: string;
+  texture: Texture;
+}
 
-let timestart;
+interface LoadedFont {
+  url: string;
+  font: Font;
+}
+
+let allFontsLoaded: Array<LoadedFont> = [],
+  allTextureLoaded: Array<LoadedTexture> = [];
 
 let meshSelected;
-const raycaster = new THREE.Raycaster();
-const click = new THREE.Vector2();
+const raycaster = new Raycaster();
+const click = new Vector2();
 let UserHasClicked = false;
 
 let goFront, goBehind, goLeft, goRight, scaleUp, scaleDown;
 
-function init() {
+////////////////////////////////////////////////////////
+////////////////Initialisation de THREE/////////////////
+////////////////////////////////////////////////////////
+
+async function init() {
   TouchKeyControl();
   window.addEventListener('click', onClick, false);
 
   (videoWidth = dataEditor.videoWidth), (videoHeight = dataEditor.videoHeight);
 
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xfff0ff);
+  scene = new Scene();
+  scene.background = new Color(0xfff0ff);
 
-  camera = new THREE.OrthographicCamera(
+  camera = new OrthographicCamera(
     videoWidth / -2,
     videoWidth / 2,
     videoHeight / -2,
     videoHeight / 2,
-    0,
+    -10,
     1000
   );
   camera.position.z = 0;
   scene.add(camera);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer = new WebGLRenderer({ antialias: true });
   renderer.setSize(videoWidth / 2, videoHeight / 2);
   document.body.appendChild(renderer.domElement);
 
+  //load all the assets
+  console.log('loading');
+  await getAllVideos();
+  await TexturesLoader();
+  await FontsLoader();
+  console.log(allFontsLoaded);
+  console.log('loaded');
+
+  //Add them in threejs
+  getAllElements();
+  TextLoader('salutttt', '../assets/Memphis.json');
+  TextLoader('coucou', 'regular');
+  TextLoader('bonjour', 'headline');
+  playVideo('dd6a50d4-3f30-4007-a953-d9748b266462', 3000);
   animation();
-  getAllVideos();
 }
-init();
+
+////////////////////////////////////////////////////////////////
+///////////////////////Fonctions en plus////////////////////////
+////////////////////////////////////////////////////////////////
 
 function onClick(event) {
   click.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -162,7 +218,173 @@ function animation() {
   renderer.render(scene, camera);
 }
 
-function getAllVideos() {
+////////////////////////////////////////////////////////////////////
+//////////////////////////// ELEMENTS //////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+//////////////////////////Get Elements//////////////////////////////
+
+async function getAllElements() {
+  for (let i = 0; i < dataEditor.elementModels.length; i++) {
+    let element = dataEditor.elementModels[i];
+    switch (element.categoryId) {
+      case 'shape':
+        addShapeThree(element);
+        break;
+      case 'brand':
+        addBrandThree(element);
+        break;
+    }
+  }
+}
+
+////////////////////////////Add Shape to THREE///////////////////////////
+
+function addShapeThree(shapeInfos) {
+  switch (shapeInfos.id) {
+    case 'square':
+      let square = new Mesh(
+        new PlaneGeometry(shapeInfos.width, shapeInfos.height),
+        new MeshBasicMaterial({
+          color: 0xff0f00,
+          side: DoubleSide,
+        })
+      );
+      square.position.set(
+        shapeInfos.transform.translation.x,
+        shapeInfos.transform.translation.y,
+        shapeInfos.depth
+      );
+      square.rotation.set(
+        shapeInfos.transform.rotation.x,
+        shapeInfos.transform.rotation.y,
+        shapeInfos.transform.rotation.z
+      );
+      square.scale.set(
+        shapeInfos.transform.scale.x,
+        shapeInfos.transform.scale.y,
+        shapeInfos.transform.scale.z
+      );
+      square.name = shapeInfos.nameId;
+      scene.add(square);
+      break;
+    case 'circle':
+      let circle = new Mesh(
+        new CircleGeometry(shapeInfos.width, 32),
+        new MeshBasicMaterial({
+          color: 0xfffff0,
+          side: DoubleSide,
+        })
+      );
+      circle.position.set(
+        shapeInfos.transform.translation.x,
+        shapeInfos.transform.translation.y,
+        shapeInfos.depth
+      );
+      circle.rotation.set(
+        shapeInfos.transform.rotation.x,
+        shapeInfos.transform.rotation.y,
+        shapeInfos.transform.rotation.z
+      );
+      circle.scale.set(
+        shapeInfos.transform.scale.x,
+        shapeInfos.transform.scale.y,
+        shapeInfos.transform.scale.z
+      );
+      circle.name = shapeInfos.nameId;
+      scene.add(circle);
+      break;
+  }
+}
+
+//////////////Load Image//////////////////
+
+function loadTextureImage(textureInfos) {
+  return new Promise<Texture>(function (resolve, reject) {
+    let textureLoader = new TextureLoader();
+    textureLoader.load(
+      '../assets/' + textureInfos + '.png',
+      function (texture) {
+        resolve(texture);
+      },
+      undefined,
+      function (err) {
+        reject(err);
+      }
+    );
+  });
+}
+
+async function TexturesLoader() {
+  const textureIds = dataEditor.elementModels
+    .filter((element) => element.categoryId === 'brand')
+    .map((element) => element.id);
+  const loadedTextures$ = loadTextures(textureIds);
+  const promise = firstValueFrom(loadedTextures$);
+  allTextureLoaded = await promise;
+}
+
+function loadTextures(ids: string[]): Observable<LoadedTexture[]> {
+  const observables = ids.map((id) => loadTexture(id));
+  return forkJoin(observables).pipe(defaultIfEmpty([]));
+}
+
+function loadTexture(id: string): Observable<LoadedTexture> {
+  return from(loadTextureImage(id)).pipe(
+    map((texture) => ({
+      id,
+      texture,
+    }))
+  );
+}
+
+///////////////////////Add Images to THREE////////////////////
+
+function addBrandThree(brandInfos) {
+  console.log('coucou', allTextureLoaded);
+  const loadedtexture = allTextureLoaded.find(
+    (element) => element.id === brandInfos.id
+  );
+  const texture = loadedtexture.texture;
+  let plane = new Mesh(
+    new PlaneGeometry(brandInfos.width, brandInfos.height),
+    new MeshBasicMaterial({
+      color: new Color(),
+      map: texture,
+      side: DoubleSide,
+    })
+  );
+  plane.position.set(
+    brandInfos.transform.translation.x,
+    brandInfos.transform.translation.y,
+    brandInfos.depth
+  );
+  plane.rotation.set(
+    MathUtils.degToRad(brandInfos.transform.rotation.x) + Math.PI,
+    MathUtils.degToRad(brandInfos.transform.rotation.y),
+    MathUtils.degToRad(brandInfos.transform.rotation.z)
+  );
+  plane.scale.set(
+    brandInfos.transform.scale.x,
+    brandInfos.transform.scale.y,
+    brandInfos.transform.scale.z
+  );
+  plane.name = brandInfos.id;
+  scene.add(plane);
+}
+
+///////////////////////////////////////////////
+/////////////////// VIDEO /////////////////////
+///////////////////////////////////////////////
+
+function videoLoading(video) {
+  return new Promise((resolve, reject) => {
+    console.log('loading video n°' + video.src);
+    resolve(video.load());
+  });
+}
+
+async function getAllVideos() {
   for (let i = 0; i < dataEditor.tracks[0].itemIds.length; i++) {
     let video = document.createElement('video');
     video.id = dataEditor.tracks[0].itemIds[i];
@@ -171,6 +393,7 @@ function getAllVideos() {
     );
     video.src = '../assets/' + videoSrc.videoId + '.mp4';
     document.getElementById('videos').appendChild(video);
+    await videoLoading(video);
   }
   addAllVideosThree();
 }
@@ -184,24 +407,23 @@ function addAllVideosThree() {
     let newVideoWidth = videoWidth,
       newVideoHeight = videoHeight;
 
-    let newTextureVideo = new THREE.VideoTexture(videoElement);
+    let newTextureVideo = new VideoTexture(videoElement);
 
     let videoData = dataEditor.trackItems.find(
       (element) => element.id === videos
     );
 
-    let newGeometry = new THREE.PlaneGeometry(
+    let newGeometry = new PlaneGeometry(
       newVideoWidth * videoData.transform.scale.x,
       newVideoHeight * videoData.transform.scale.y
     );
 
-    let newMaterial = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(),
+    let newMaterial = new MeshBasicMaterial({
       map: newTextureVideo,
-      side: THREE.DoubleSide,
+      side: DoubleSide,
     });
 
-    let newMesh = new THREE.Mesh(newGeometry, newMaterial);
+    let newMesh = new Mesh(newGeometry, newMaterial);
     newMesh.name = videos;
     newMesh.rotation.set(
       Math.PI + videoData.transform.rotation.x,
@@ -213,129 +435,111 @@ function addAllVideosThree() {
       videoData.transform.translation.y,
       0
     );
-
     scene.add(newMesh);
   }
-  getVideoByTs(dataEditor.playbackPosition);
-  console.log('start timer now');
-  timestart = Date.now();
 }
 
-function getVideoByTs(ts) {
-  for (var i = 0; i < timeouts.length; i++) {
-    clearTimeout(timeouts[i]);
+function pauseVideo(id) {
+  if (id) {
+    let videoObject = scene.getObjectByName(id);
+    videoObject.visible = false;
+
+    let videoElement = <HTMLVideoElement>document.getElementById(id);
+    videoElement.pause();
   }
+}
 
-  console.log('timestamp', ts);
+function playVideoPromise(video) {
+  return new Promise((resolve) => {
+    resolve(video.play());
+  });
+}
 
-  let videosOnTs = [];
+async function playVideo(id, start: number) {
+  let videoElement = <HTMLVideoElement>document.getElementById(id);
+  console.log(videoElement);
+  let videoObject = scene.getObjectByName(id);
 
-  for (var i = 0; i < dataEditor.trackItems.length; i++) {
-    let video = dataEditor.trackItems[i];
+  await playVideoPromise(videoElement);
 
-    let start = video.ts;
-    let end = start + video.duration;
+  videoElement.currentTime = start;
+}
 
-    if (start <= ts && ts <= end) {
-      videosOnTs.push(video);
-    }
-  }
-  if (videosOnTs.length > 0) {
-    afficheVideo(videosOnTs, ts);
-  } else if (ts < dataEditor.playbackDuration) {
-    console.log('pas de video a ce timestamp');
-    hideAllVideos();
+///////////////////////////////////////////////////////////////
+//////////////////////////// TEXT /////////////////////////////
+///////////////////////////////////////////////////////////////
 
-    let nextVideos = [];
-    for (let i = 0; i < dataEditor.trackItems.length; i++) {
-      let video = dataEditor.trackItems[i];
-      if (video.ts > ts) {
-        nextVideos.push(video.ts);
+///////////////////////Load Font///////////////////////////////
+
+function loadFontThree(url) {
+  return new Promise<Font>(function (resolve, reject) {
+    let fontLoader = new FontLoader();
+    fontLoader.load(
+      url,
+      function (font) {
+        resolve(font);
+      },
+      null,
+      function (err) {
+        reject(err);
       }
-    }
-    if (nextVideos.length > 0 && videoPauseStatus) {
-      let timeWithNoVideo = closest(ts, nextVideos) - ts;
-
-      const asyncFoo = async (ms) => {
-        await new Promise((resolve) => setTimeout(resolve, ms));
-        getVideoByTs(ts + ms + 1);
-      };
-
-      asyncFoo(timeWithNoVideo)
-
-      console.log('temps sans video', timeWithNoVideo);
-    }
-  } else {
-    console.log('end of the playback', Date.now() - timestart);
-  }
+    );
+  });
 }
 
-function closest(num, arr) {
-  let curr = arr[0];
-  let diff = Math.abs(num - curr);
-  for (let val = 0; val < arr.length; val++) {
-    let newdiff = Math.abs(num - arr[val]);
-    if (newdiff < diff) {
-      diff = newdiff;
-      curr = arr[val];
-    }
-  }
-  return curr;
+async function FontsLoader() {
+  const fontsToLoadUrl = dataEditor.textModels.map((element) => element.url);
+  const loadedFonts$ = loadFonts(fontsToLoadUrl);
+  const promise = firstValueFrom(loadedFonts$);
+  allFontsLoaded = await promise;
 }
 
-function hideAllVideos() {
-  for (let i = 1; i < scene.children.length; i++) {
-    scene.children[i].visible = false;
-  }
+function loadFonts(urls: string[]): Observable<LoadedFont[]> {
+  const observables = urls.map((url) => loadFont(url));
+  return forkJoin(observables).pipe(defaultIfEmpty([]));
 }
 
-function afficheVideo(videos, ts) {
-  let videosElements = <HTMLVideoElement>document.getElementById(videos[0].id);
-
-  let timeStartVideo: number = ts - videos[0].ts + videos[0].videoOffset;
-
-  videosElements.currentTime = timeStartVideo / 1000;
-
-  let ThreeObject = scene.getObjectByName(videos[0].id);
-
-  hideAllVideos();
-
-  ThreeObject.visible = true;
-
-  if (videoPauseStatus && videosElements) {
-    let playPromise = videosElements.play();
-
-    if (playPromise !== undefined) {
-      playPromise
-        .then((_) => {
-          console.log(
-            'affiche vidéo promise play, ts départ vidéo',
-            timeStartVideo
-          );
-          videosElements.currentTime = timeStartVideo / 1000;
-          let videoPlayDuration =
-            videos[0].videoOffset + videos[0].duration - timeStartVideo;
-          console.log('temps de lecture de la vidéo', videoPlayDuration);
-          timeouts.push(
-            setTimeout(function () {
-              getVideoByTs(ts + videoPlayDuration + 1);
-              videosElements.pause();
-            }, videoPlayDuration)
-          );
-        })
-        .catch((error) => {
-          console.log('play video error', error);
-        });
-    }
-  }
+function loadFont(url: string): Observable<LoadedFont> {
+  return from(loadFontThree(url)).pipe(
+    map((font) => ({
+      url,
+      font
+    }))
+  )
 }
 
-document.getElementById('button').addEventListener('click', () => {
-  let tsChange = Number(
-    (<HTMLInputElement>document.getElementById('ts')).value
-  );
-  if (tsChange !== null) {
-    console.log('change ts', tsChange);
-    getVideoByTs(tsChange);
+///////////////////////Add Text to THREE/////////////////////////
+
+function TextLoader(textString, type) {
+  var fontIndex = allFontsLoaded.findIndex((element) => {
+    return element.url === type;
+  });
+  var textGeo = new TextGeometry(textString, {
+    size: 100,
+    height: 100,
+    curveSegments: 6,
+    font: allFontsLoaded[0].font,
+  });
+  var color = new Color();
+  color.setRGB(255, 250, 250);
+  var textMaterial = new MeshBasicMaterial({
+    color: color,
+    side: DoubleSide,
+  });
+  let text = new Mesh(textGeo, textMaterial);
+  text.name = type; // Changer sur le id du texte
+  text.position.set(-200, 0, 8);
+  text.rotation.set(Math.PI, 0, 0);
+  scene.add(text);
+}
+
+/*
+.subscribe(command => {
+  switch (vid){
+    case 'PlayVideo' :
+      break;
   }
-});
+})
+*/
+
+init();

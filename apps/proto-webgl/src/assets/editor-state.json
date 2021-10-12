@@ -41,17 +41,51 @@
         "categoryId": "shape",
         "id": "square",
         "nameId": "square",
-        "width": 32,
-        "height": 32,
-        "depth": 0
+        "width": 430,
+        "height": 430,
+        "depth": 0,
+        "transform": {
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        }
       },
       {
         "categoryId": "shape",
         "id": "circle",
         "nameId": "circle",
-        "width": 32,
-        "height": 32,
-        "depth": 0
+        "width": 130,
+        "height": 130,
+        "depth": 0,
+        "transform": {
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        }
       },
       {
         "categoryId": "brand",
@@ -59,7 +93,24 @@
         "name": "Tempo",
         "width": 298,
         "height": 210,
-        "depth": 0
+        "depth": 9,
+        "transform": {
+          "translation": {
+            "x": 450,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": -20
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        }
       },
       {
         "categoryId": "brand",
@@ -67,7 +118,24 @@
         "name": "Coca-Cola",
         "width": 614,
         "height": 192,
-        "depth": 0
+        "depth": 0,
+        "transform": {
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          }
+        }
       }
     ],
     "frameIndex": 0,
@@ -82,6 +150,7 @@
       {
         "id": "headline",
         "nameId": "headline",
+        "url" : "../assets/Memphis.json",
         "style": {
           "fontFamily": "Roboto",
           "fontSize": "16pt",
@@ -94,6 +163,7 @@
       {
         "id": "regular",
         "nameId": "regular",
+        "url" : "../assets/Helvetica.json",
         "style": {
           "fontFamily": "Roboto",
           "fontSize": "14pt",
@@ -106,6 +176,7 @@
       {
         "id": "fun",
         "nameId": "fun",
+        "url" : "../assets/Memphis.json",
         "style": {
           "fontFamily": "Roboto",
           "fontSize": "24pt",
