@@ -90,7 +90,7 @@
       {
         "categoryId": "brand",
         "id": "tempo-logo",
-        "name": "Tempo",
+        "nameId": "Tempo",
         "width": 298,
         "height": 210,
         "depth": 9,
@@ -115,7 +115,7 @@
       {
         "categoryId": "brand",
         "id": "coca-logo",
-        "name": "Coca-Cola",
+        "nameId": "Coca-Cola",
         "width": 614,
         "height": 192,
         "depth": 0,
@@ -200,8 +200,6 @@
         "id": "3f0a7bfe-94b3-4a58-95ff-e72f3a30e8ea",
         "label": "Video",
         "itemIds": [
-          "a6a7e1aa-c53f-47cd-8832-2df473b27322",
-          "ede08c9d-2483-454d-8478-478c32cfc7d5",
           "dd6a50d4-3f30-4007-a953-d9748b266462"
         ]
       }

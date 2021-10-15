@@ -1,3 +1,41 @@
+/*
+interface X {
+  str: string;
+}
+interface Y extends X {
+  str2: string;
+}
+
+interface Z {
+  b: boolean;
+}
+
+type W = X & Z;
+type WWithoutStr = Pick<W, 'str' | 'b'>;
+
+interface Ex<T> {
+  type: string;
+  data: T;
+}
+
+const variable: Ex<string> = {
+  type: 'tt',
+  data: '01'
+}
+
+function create<T>(value: T): Ex<T> {
+  return {
+    type: 'truc',
+    data: value
+  }
+}
+
+const example = create({
+  bleh: 'truc'
+})
+example.data.bleh.
+*/
+
 import './app.element.scss';
 import {
   TextureLoader,
@@ -18,7 +56,21 @@ import {
   TextGeometry,
   FontLoader,
   Font,
+  Renderer,
+  Camera,
+  Event,
+  Object3D,
+  Clock,
+  PlaneBufferGeometry,
+  PerspectiveCamera,
+  ShaderMaterial,
+  Shader,
+  Material,
 } from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass';
+import { BloomPass } from 'three/examples/jsm/postprocessing/BloomPass';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import * as data from '../assets/editor-state.json';
 import {
   fromEvent,
@@ -26,10 +78,17 @@ import {
   generate,
   from,
   forkJoin,
-  of,
   firstValueFrom,
+  zip,
+  of,
 } from 'rxjs';
 import { throttleTime, scan, map, defaultIfEmpty } from 'rxjs';
+import { Noise } from 'noisejs';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+//@ts-ignore
+//import vertexShader from "../assets/gl/vertex.glsl";
+//@ts-ignore
+//import fragmentShader from "../assets/gl/fragment.glsl";
 
 export class AppElement extends HTMLElement {
   public static observedAttributes = [];
@@ -49,9 +108,9 @@ customElements.define('proto-webgl-root', AppElement);
 
 const dataEditor = data.editor;
 
-let videoWidth, videoHeight;
+let videoWidth: number, videoHeight: number;
 
-let camera, scene, renderer;
+let camera: Camera, cameraP: Camera, scene: Scene, renderer: WebGLRenderer;
 
 interface LoadedTexture {
   id: string;
@@ -59,28 +118,61 @@ interface LoadedTexture {
 }
 
 interface LoadedFont {
+  name: string;
   url: string;
   font: Font;
+}
+
+interface Transform {
+  transform: {
+    translation: {
+      x: number;
+      y: number;
+      z: number;
+    };
+    rotation: {
+      x: number;
+      y: number;
+      z: number;
+    };
+    scale: {
+      x: number;
+      y: number;
+      z: number;
+    };
+  };
+}
+
+interface brandInfos extends Transform {
+  id: string;
+  width: number;
+  height: number;
+  depth: number;
+}
+
+interface shapeInfos extends brandInfos {
+  categoryId: string;
+  nameId: string;
 }
 
 let allFontsLoaded: Array<LoadedFont> = [],
   allTextureLoaded: Array<LoadedTexture> = [];
 
-let meshSelected;
+let meshSelected: Object3D;
 const raycaster = new Raycaster();
 const click = new Vector2();
-let UserHasClicked = false;
 
-let goFront, goBehind, goLeft, goRight, scaleUp, scaleDown;
+var clock = new Clock();
+let composer: EffectComposer;
+let grainEffect: ShaderPass;
+var delta = 0;
+var time = 0;
 
 ////////////////////////////////////////////////////////
 ////////////////Initialisation de THREE/////////////////
 ////////////////////////////////////////////////////////
 
 async function init() {
-  TouchKeyControl();
-  window.addEventListener('click', onClick, false);
-
   (videoWidth = dataEditor.videoWidth), (videoHeight = dataEditor.videoHeight);
 
   scene = new Scene();
@@ -91,15 +183,20 @@ async function init() {
     videoWidth / 2,
     videoHeight / -2,
     videoHeight / 2,
-    -10,
+    0,
     1000
   );
-  camera.position.z = 0;
+  cameraP = new PerspectiveCamera(45, videoWidth / videoHeight, 1, 1000);
+  //scene.add( cameraP );
+
+  camera.position.z = 20;
   scene.add(camera);
 
   renderer = new WebGLRenderer({ antialias: true });
   renderer.setSize(videoWidth / 2, videoHeight / 2);
   document.body.appendChild(renderer.domElement);
+
+  Composer();
 
   //load all the assets
   console.log('loading');
@@ -110,112 +207,94 @@ async function init() {
   console.log('loaded');
 
   //Add them in threejs
-  getAllElements();
-  TextLoader('salutttt', '../assets/Memphis.json');
-  TextLoader('coucou', 'regular');
-  TextLoader('bonjour', 'headline');
-  playVideo('dd6a50d4-3f30-4007-a953-d9748b266462', 3000);
+  addAllVideosThree();
+  //getAllElements();
+  //TextLoader('salutttt', 'fun');
+  //TextLoader('coucou', 'regular');
+  //TextLoader('bonjour', 'headline');
+  playVideo('dd6a50d4-3f30-4007-a953-d9748b266462', 0);
   animation();
+}
+
+function Composer() {
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+
+  const bloomPass = new BloomPass(
+    1, // strength
+    25, // kernel size
+    4, // sigma ?
+    256 // blur render target resolution
+  );
+  //composer.addPass(bloomPass);
+
+  const filmPass = new FilmPass(
+    0.35, // noise intensity
+    0.025, // scanline intensity
+    648, // scanline count
+    0 // grayscale
+  );
+  filmPass.renderToScreen = true;
+  //composer.addPass(filmPass);
+
+  var counter = 0.0;
+  var grainEffectShader = {
+    uniforms: {
+      tDiffuse: { value: null },
+      amount: { value: counter },
+    },
+    vertexShader: `varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix 
+        * modelViewMatrix 
+        * vec4( position, 1.0 );
+    }`,
+    fragmentShader: `uniform float amount;
+    uniform sampler2D tDiffuse;
+    varying vec2 vUv;
+  
+    float random( vec2 p )
+    {
+      vec2 K1 = vec2(
+        23.14069263277926, // e^pi (Gelfond's constant)
+        2.665144142690225 // 2^sqrt(2) (Gelfondâ€“Schneider constant)
+      );
+      return fract( cos( dot(p,K1) ) * 12345.6789 );
+    }
+  
+    void main() {
+  
+      vec4 color = texture2D( tDiffuse, vUv );
+      vec2 uvRandom = vUv;
+      uvRandom.y *= random(vec2(uvRandom.y,amount));
+      color.rgb += random(uvRandom)*0.25;
+      gl_FragColor = vec4( color  );
+    }`,
+  };
+
+  grainEffect = new ShaderPass(grainEffectShader);
+  grainEffect.renderToScreen = true;
+  composer.addPass(grainEffect);
 }
 
 ////////////////////////////////////////////////////////////////
 ///////////////////////Fonctions en plus////////////////////////
 ////////////////////////////////////////////////////////////////
 
-function onClick(event) {
-  click.x = (event.clientX / window.innerWidth) * 2 - 1;
-  click.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  UserHasClicked = true;
-}
+let PlaneGeom: PlaneBufferGeometry[] = [];
 
-function TouchKeyControl() {
-  const onKeyDown = function (event) {
-    switch (event.key) {
-      case 'z':
-        goFront = true;
-        break;
-      case 'q':
-        goLeft = true;
-        break;
-      case 's':
-        goBehind = true;
-        break;
-      case 'd':
-        goRight = true;
-        break;
-      case 'ArrowUp':
-        scaleUp = true;
-        break;
-      case 'ArrowDown':
-        scaleDown = true;
-        break;
-      case ' ':
-        console.log('space');
-        break;
-    }
-  };
-
-  const onKeyUp = function (event) {
-    switch (event.key) {
-      case 'z':
-        goFront = false;
-        break;
-      case 'q':
-        goLeft = false;
-        break;
-      case 's':
-        goBehind = false;
-        break;
-      case 'd':
-        goRight = false;
-        break;
-      case 'ArrowUp':
-        scaleUp = false;
-        break;
-      case 'ArrowDown':
-        scaleDown = false;
-        break;
-    }
-  };
-  document.addEventListener('keydown', onKeyDown, false);
-  document.addEventListener('keyup', onKeyUp, false);
-}
+let PlaneMat: ShaderMaterial;
 
 function animation() {
-  if (UserHasClicked) {
-    raycaster.setFromCamera(click, camera);
-    UserHasClicked = false;
-
-    const intersects = raycaster.intersectObjects(scene.children);
-
-    for (let i = 0; i < intersects.length; i++) {
-      meshSelected = intersects[0].object;
-    }
-
-    if (goRight) {
-      meshSelected.position.x += 0.2;
-    }
-    if (goLeft) {
-      meshSelected.position.x -= 0.2;
-    }
-    if (goFront) {
-      meshSelected.position.y -= 0.2;
-    }
-    if (goBehind) {
-      meshSelected.position.y += 0.2;
-    }
-    if (scaleUp) {
-      meshSelected.scale.x += 0.01;
-      meshSelected.scale.y += 0.01;
-    }
-    if (scaleDown) {
-      meshSelected.scale.x -= 0.01;
-      meshSelected.scale.y -= 0.01;
-    }
-  }
-
   requestAnimationFrame(animation);
-  renderer.render(scene, camera);
+
+  let deltaTime = clock.getElapsedTime();
+
+  PlaneMat.uniforms.uTime.value = clock.getElapsedTime();
+  grainEffect.uniforms["amount"].value = clock.getElapsedTime();
+
+  composer.render(deltaTime);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -225,22 +304,20 @@ function animation() {
 //////////////////////////Get Elements//////////////////////////////
 
 async function getAllElements() {
-  for (let i = 0; i < dataEditor.elementModels.length; i++) {
-    let element = dataEditor.elementModels[i];
-    switch (element.categoryId) {
-      case 'shape':
-        addShapeThree(element);
-        break;
-      case 'brand':
-        addBrandThree(element);
-        break;
-    }
-  }
+  const allElements = of(dataEditor.elementModels);
+
+  allElements
+    .pipe(map((x) => x.filter((y) => y.categoryId === 'brand')))
+    .subscribe((elements) => elements.map((element) => addBrandThree(element)));
+
+  allElements
+    .pipe(map((x) => x.filter((y) => y.categoryId === 'shape')))
+    .subscribe((elements) => elements.map((element) => addShapeThree(element)));
 }
 
 ////////////////////////////Add Shape to THREE///////////////////////////
 
-function addShapeThree(shapeInfos) {
+function addShapeThree(shapeInfos: shapeInfos) {
   switch (shapeInfos.id) {
     case 'square':
       let square = new Mesh(
@@ -250,23 +327,7 @@ function addShapeThree(shapeInfos) {
           side: DoubleSide,
         })
       );
-      square.position.set(
-        shapeInfos.transform.translation.x,
-        shapeInfos.transform.translation.y,
-        shapeInfos.depth
-      );
-      square.rotation.set(
-        shapeInfos.transform.rotation.x,
-        shapeInfos.transform.rotation.y,
-        shapeInfos.transform.rotation.z
-      );
-      square.scale.set(
-        shapeInfos.transform.scale.x,
-        shapeInfos.transform.scale.y,
-        shapeInfos.transform.scale.z
-      );
-      square.name = shapeInfos.nameId;
-      scene.add(square);
+      TransformShape(square, shapeInfos);
       break;
     case 'circle':
       let circle = new Mesh(
@@ -276,30 +337,34 @@ function addShapeThree(shapeInfos) {
           side: DoubleSide,
         })
       );
-      circle.position.set(
-        shapeInfos.transform.translation.x,
-        shapeInfos.transform.translation.y,
-        shapeInfos.depth
-      );
-      circle.rotation.set(
-        shapeInfos.transform.rotation.x,
-        shapeInfos.transform.rotation.y,
-        shapeInfos.transform.rotation.z
-      );
-      circle.scale.set(
-        shapeInfos.transform.scale.x,
-        shapeInfos.transform.scale.y,
-        shapeInfos.transform.scale.z
-      );
-      circle.name = shapeInfos.nameId;
-      scene.add(circle);
+      TransformShape(circle, shapeInfos);
       break;
   }
 }
 
+function TransformShape(shapeElement: Mesh, element: shapeInfos) {
+  shapeElement.position.set(
+    element.transform.translation.x,
+    element.transform.translation.y,
+    element.depth
+  );
+  shapeElement.rotation.set(
+    element.transform.rotation.x,
+    element.transform.rotation.y,
+    element.transform.rotation.z
+  );
+  shapeElement.scale.set(
+    element.transform.scale.x,
+    element.transform.scale.y,
+    element.transform.scale.z
+  );
+  shapeElement.name = element.nameId;
+  scene.add(shapeElement);
+}
+
 //////////////Load Image//////////////////
 
-function loadTextureImage(textureInfos) {
+function loadTextureImage(textureInfos: string) {
   return new Promise<Texture>(function (resolve, reject) {
     let textureLoader = new TextureLoader();
     textureLoader.load(
@@ -340,12 +405,11 @@ function loadTexture(id: string): Observable<LoadedTexture> {
 
 ///////////////////////Add Images to THREE////////////////////
 
-function addBrandThree(brandInfos) {
-  console.log('coucou', allTextureLoaded);
+function addBrandThree(brandInfos: brandInfos) {
   const loadedtexture = allTextureLoaded.find(
     (element) => element.id === brandInfos.id
   );
-  const texture = loadedtexture.texture;
+  const texture = loadedtexture!.texture;
   let plane = new Mesh(
     new PlaneGeometry(brandInfos.width, brandInfos.height),
     new MeshBasicMaterial({
@@ -377,28 +441,36 @@ function addBrandThree(brandInfos) {
 /////////////////// VIDEO /////////////////////
 ///////////////////////////////////////////////
 
-function videoLoading(video) {
-  return new Promise((resolve, reject) => {
+function videoLoading(video: HTMLVideoElement) {
+  return new Promise<void>((resolve, _reject) => {
     console.log('loading video n°' + video.src);
-    resolve(video.load());
+    fromEvent(video, 'loadeddata').subscribe(() => resolve());
   });
 }
 
 async function getAllVideos() {
-  for (let i = 0; i < dataEditor.tracks[0].itemIds.length; i++) {
-    let video = document.createElement('video');
-    video.id = dataEditor.tracks[0].itemIds[i];
-    let videoSrc = dataEditor.trackItems.find(
-      (element) => element.id == video.id
-    );
-    video.src = '../assets/' + videoSrc.videoId + '.mp4';
-    document.getElementById('videos').appendChild(video);
-    await videoLoading(video);
-  }
-  addAllVideosThree();
+  const IdsVideo = dataEditor.tracks[0].itemIds;
+
+  const videoElements = IdsVideo.map((element) =>
+    createVideoHtmlElement(element)
+  );
 }
 
+async function createVideoHtmlElement(id: string) {
+  const video = document.createElement('video');
+  video.id = id;
+  const videoSrc = dataEditor.trackItems.find((element) => element.id == id);
+  video.src = '../assets/' + videoSrc!.videoId + '.mp4';
+  document.getElementById('videos')!.appendChild(video);
+
+  await videoLoading(video);
+  console.log('function ', video.readyState);
+}
+
+//const observables$ = urls.map((url) => from(loadFontThree(url)));
+
 function addAllVideosThree() {
+  console.log('lancer addAllVideosThree');
   for (let i = 0; i < dataEditor.tracks[0].itemIds.length; i++) {
     let videos = dataEditor.tracks[0].itemIds[i];
 
@@ -414,9 +486,149 @@ function addAllVideosThree() {
     );
 
     let newGeometry = new PlaneGeometry(
-      newVideoWidth * videoData.transform.scale.x,
-      newVideoHeight * videoData.transform.scale.y
+      newVideoWidth * videoData!.transform.scale.x,
+      newVideoHeight * videoData!.transform.scale.y,
+      10,
+      10
     );
+    PlaneGeom.push(newGeometry);
+
+    let newMaterialRGBShift = new ShaderMaterial({
+      vertexShader: `varying vec2 vUv;
+      uniform float uTime;
+
+      vec3 mod289(vec3 x) {
+        return x - floor(x * (1.0 / 289.0)) * 289.0;
+      }
+      
+      vec4 mod289(vec4 x) {
+        return x - floor(x * (1.0 / 289.0)) * 289.0;
+      }
+      
+      vec4 permute(vec4 x) {
+           return mod289(((x*34.0)+1.0)*x);
+      }
+      
+      vec4 taylorInvSqrt(vec4 r)
+      {
+        return 1.79284291400159 - 0.85373472095314 * r;
+      }
+      
+      float snoise(vec3 v) {
+        const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
+        const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+        
+        // First corner
+        vec3 i  = floor(v + dot(v, C.yyy) );
+        vec3 x0 =   v - i + dot(i, C.xxx) ;
+        
+        // Other corners
+        vec3 g = step(x0.yzx, x0.xyz);
+        vec3 l = 1.0 - g;
+        vec3 i1 = min( g.xyz, l.zxy );
+        vec3 i2 = max( g.xyz, l.zxy );
+      
+        //   x0 = x0 - 0.0 + 0.0 * C.xxx;
+        //   x1 = x0 - i1  + 1.0 * C.xxx;
+        //   x2 = x0 - i2  + 2.0 * C.xxx;
+        //   x3 = x0 - 1.0 + 3.0 * C.xxx;
+        vec3 x1 = x0 - i1 + C.xxx;
+        vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y
+        vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y
+        
+        // Permutations
+        i = mod289(i);
+        vec4 p = permute( permute( permute(
+                   i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
+                 + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))
+                 + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+                 
+        // Gradients: 7x7 points over a square, mapped onto an octahedron.
+        // The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
+        float n_ = 0.142857142857; // 1.0/7.0
+        vec3  ns = n_ * D.wyz - D.xzx;
+      
+        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)
+      
+        vec4 x_ = floor(j * ns.z);
+        vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)
+      
+        vec4 x = x_ *ns.x + ns.yyyy;
+        vec4 y = y_ *ns.x + ns.yyyy;
+        vec4 h = 1.0 - abs(x) - abs(y);
+      
+        vec4 b0 = vec4( x.xy, y.xy );
+        vec4 b1 = vec4( x.zw, y.zw );
+      
+        //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;
+        //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;
+        vec4 s0 = floor(b0)*2.0 + 1.0;
+        vec4 s1 = floor(b1)*2.0 + 1.0;
+        vec4 sh = -step(h, vec4(0.0));
+      
+        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+      
+        vec3 p0 = vec3(a0.xy,h.x);
+        vec3 p1 = vec3(a0.zw,h.y);
+        vec3 p2 = vec3(a1.xy,h.z);
+        vec3 p3 = vec3(a1.zw,h.w);
+        
+        // Normalise gradients
+        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+        p0 *= norm.x;
+        p1 *= norm.y;
+        p2 *= norm.z;
+        p3 *= norm.w;
+        
+        // Mix final noise value
+        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+        m = m * m;
+        return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),
+                                      dot(p2,x2), dot(p3,x3) ) );
+      }
+      
+      void main() {
+        vUv = uv;
+
+        vec3 pos = position;
+        float noiseFreq = 3.5;
+        float noiseAmp = 10.0;
+        vec3 noisePos = vec3(pos.x, pos.y * noiseFreq + uTime, pos.z);
+        pos.x += snoise(noisePos) * noiseAmp;
+        pos.y += snoise(noisePos) * noiseAmp;
+      
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.);
+      }`,
+      fragmentShader: `uniform float uTime;
+      uniform sampler2D uTexture;
+      uniform float uAlpha;
+      varying vec2 uOffset;
+      varying vec2 vUv;
+
+      vec3 rgbShift(sampler2D textureimage, vec2 uv, vec2 offset ){
+        float r = texture2D(textureimage, uv + offset).r;
+        vec2 gb = texture2D(textureimage, uv).gb;
+        return vec3(r, gb);
+      }
+      
+      void main() {
+        vec2 uOffset = vec2(sin(uTime * 10.) / 50., sin(-uTime * 5.) / 50.);
+
+        vec3 color = rgbShift(uTexture, vUv, uOffset);
+        
+        gl_FragColor = vec4(color, uAlpha);
+      }
+      `,
+      uniforms: {
+        uTime: { value: 0.0 },
+        uTexture: { value: newTextureVideo },
+        uAlpha: { value: 1 },
+        uOffset: { value: new Vector2(0.02, 0.02) },
+      },
+      side: DoubleSide,
+    });
+    PlaneMat = newMaterialRGBShift;
 
     let newMaterial = new MeshBasicMaterial({
       map: newTextureVideo,
@@ -426,36 +638,36 @@ function addAllVideosThree() {
     let newMesh = new Mesh(newGeometry, newMaterial);
     newMesh.name = videos;
     newMesh.rotation.set(
-      Math.PI + videoData.transform.rotation.x,
-      videoData.transform.rotation.y,
+      Math.PI + videoData!.transform.rotation.x,
+      videoData!.transform.rotation.y,
       0
     );
     newMesh.position.set(
-      videoData.transform.translation.x,
-      videoData.transform.translation.y,
+      videoData!.transform.translation.x,
+      videoData!.transform.translation.y,
       0
     );
     scene.add(newMesh);
   }
 }
 
-function pauseVideo(id) {
+function pauseVideo(id: string) {
   if (id) {
-    let videoObject = scene.getObjectByName(id);
-    videoObject.visible = false;
+    const videoObject = scene.getObjectByName(id);
+    videoObject!.visible = false;
 
-    let videoElement = <HTMLVideoElement>document.getElementById(id);
+    const videoElement = <HTMLVideoElement>document.getElementById(id);
     videoElement.pause();
   }
 }
 
-function playVideoPromise(video) {
+function playVideoPromise(video: HTMLVideoElement) {
   return new Promise((resolve) => {
     resolve(video.play());
   });
 }
 
-async function playVideo(id, start: number) {
+async function playVideo(id: string, start: number) {
   let videoElement = <HTMLVideoElement>document.getElementById(id);
   console.log(videoElement);
   let videoObject = scene.getObjectByName(id);
@@ -471,7 +683,7 @@ async function playVideo(id, start: number) {
 
 ///////////////////////Load Font///////////////////////////////
 
-function loadFontThree(url) {
+function loadFontThree(url: string) {
   return new Promise<Font>(function (resolve, reject) {
     let fontLoader = new FontLoader();
     fontLoader.load(
@@ -479,7 +691,7 @@ function loadFontThree(url) {
       function (font) {
         resolve(font);
       },
-      null,
+      undefined,
       function (err) {
         reject(err);
       }
@@ -488,40 +700,43 @@ function loadFontThree(url) {
 }
 
 async function FontsLoader() {
-  const fontsToLoadUrl = dataEditor.textModels.map((element) => element.url);
-  const loadedFonts$ = loadFonts(fontsToLoadUrl);
-  const promise = firstValueFrom(loadedFonts$);
+  const fontsToLoad = dataEditor.textModels;
+
+  const promise = firstValueFrom(loadFonts(fontsToLoad));
+
   allFontsLoaded = await promise;
 }
 
-function loadFonts(urls: string[]): Observable<LoadedFont[]> {
-  const observables = urls.map((url) => loadFont(url));
-  return forkJoin(observables).pipe(defaultIfEmpty([]));
-}
-
-function loadFont(url: string): Observable<LoadedFont> {
-  return from(loadFontThree(url)).pipe(
-    map((font) => ({
-      url,
-      font
-    }))
-  )
+function loadFonts(
+  elements: { url: string; nameId: string }[]
+): Observable<LoadedFont[]> {
+  const observables$ = elements.map(({ url, nameId }) =>
+    from(loadFontThree(url)).pipe(
+      map((font) => ({
+        url,
+        name: nameId,
+        font,
+      }))
+    )
+  );
+  return forkJoin(observables$).pipe(defaultIfEmpty([]));
 }
 
 ///////////////////////Add Text to THREE/////////////////////////
 
-function TextLoader(textString, type) {
+function TextLoader(textString: string, type: string) {
   var fontIndex = allFontsLoaded.findIndex((element) => {
-    return element.url === type;
+    return element.name === type;
   });
+  console.log(allFontsLoaded[fontIndex]);
   var textGeo = new TextGeometry(textString, {
     size: 100,
     height: 100,
     curveSegments: 6,
-    font: allFontsLoaded[0].font,
+    font: allFontsLoaded[fontIndex].font,
   });
   var color = new Color();
-  color.setRGB(255, 250, 250);
+  color.setRGB(255, 255, 255);
   var textMaterial = new MeshBasicMaterial({
     color: color,
     side: DoubleSide,

@@ -11,7 +11,8 @@ specifiers:
   '@nrwl/workspace': 12.9.0
   '@types/jest': 26.0.24
   '@types/node': 14.14.33
-  '@types/three': ^0.132.2
+  '@types/noisejs': ^0.0.28
+  '@types/three': 0.132.2
   '@typescript-eslint/eslint-plugin': ~4.28.3
   '@typescript-eslint/parser': ~4.28.3
   core-js: ^3.6.5
@@ -20,16 +21,18 @@ specifiers:
   eslint-config-prettier: 8.1.0
   eslint-plugin-cypress: ^2.10.3
   jest: 27.0.3
+  noisejs: ^2.1.0
   prettier: ^2.3.1
   regenerator-runtime: 0.13.7
   rxjs: ^7.4.0
-  three: ^0.132.2
+  three: 0.132.2
   ts-jest: 27.0.3
   tslib: ^2.0.0
   typescript: ~4.3.5
 
 dependencies:
   core-js: 3.18.1
+  noisejs: 2.1.0
   regenerator-runtime: 0.13.7
   rxjs: 7.4.0
   three: 0.132.2
@@ -46,6 +49,7 @@ devDependencies:
   '@nrwl/workspace': 12.9.0_prettier@2.4.1
   '@types/jest': 26.0.24
   '@types/node': 14.14.33
+  '@types/noisejs': 0.0.28
   '@types/three': 0.132.2
   '@typescript-eslint/eslint-plugin': 4.28.5_aef98d5017e29b9d77e8f1f0bddfcabc
   '@typescript-eslint/parser': 4.28.5_eslint@7.22.0+typescript@4.3.5
@@ -2277,6 +2281,10 @@ packages:
 
   /@types/node/14.14.33:
     resolution: {integrity: sha512-oJqcTrgPUF29oUP8AsUqbXGJNuPutsetaa9kTQAQce5Lx5dTYWV02ScBiT/k1BX/Z7pKeqedmvp39Wu4zR7N7g==}
+    dev: true
+
+  /@types/noisejs/0.0.28:
+    resolution: {integrity: sha1-eXrCWdWSAE+OE1Jsya/q+fH8sm4=}
     dev: true
 
   /@types/parse-json/4.0.0:
@@ -8108,6 +8116,10 @@ packages:
   /node-releases/1.1.76:
     resolution: {integrity: sha512-9/IECtNr8dXNmPWmFXepT0/7o5eolGesHUa3mtr0KlgnCvnZxwh2qensKL42JJY2vQKC3nIBXetFAqR+PW1CmA==}
     dev: true
+
+  /noisejs/2.1.0:
+    resolution: {integrity: sha1-hLTEzQT/QzZwNPZSU+IT4Nn+Gv8=}
+    dev: false
 
   /nopt/5.0.0:
     resolution: {integrity: sha512-Tbj67rffqceeLpcRXrT7vKAN8CwfPeIBgM7E6iBkmKLV7bEMwpGgYLGv0jACUsECaa/vuxP0IjEont6umdMgtQ==}
