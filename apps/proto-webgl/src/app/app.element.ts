@@ -1,41 +1,3 @@
-/*
-interface X {
-  str: string;
-}
-interface Y extends X {
-  str2: string;
-}
-
-interface Z {
-  b: boolean;
-}
-
-type W = X & Z;
-type WWithoutStr = Pick<W, 'str' | 'b'>;
-
-interface Ex<T> {
-  type: string;
-  data: T;
-}
-
-const variable: Ex<string> = {
-  type: 'tt',
-  data: '01'
-}
-
-function create<T>(value: T): Ex<T> {
-  return {
-    type: 'truc',
-    data: value
-  }
-}
-
-const example = create({
-  bleh: 'truc'
-})
-example.data.bleh.
-*/
-
 import './app.element.scss';
 import {
   TextureLoader,
@@ -71,6 +33,8 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass';
 import { BloomPass } from 'three/examples/jsm/postprocessing/BloomPass';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterImagePass';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import * as data from '../assets/editor-state.json';
 import {
   fromEvent,
@@ -83,12 +47,9 @@ import {
   of,
 } from 'rxjs';
 import { throttleTime, scan, map, defaultIfEmpty } from 'rxjs';
-import { Noise } from 'noisejs';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
-//@ts-ignore
-//import vertexShader from "../assets/gl/vertex.glsl";
-//@ts-ignore
-//import fragmentShader from "../assets/gl/fragment.glsl";
+import RGBEffectShaderMaterial from '../assets/Shaders/VideosShaderMaterials';
+import addSubtitles from './subtitles/addSubtitles';
+import { LoadedFont, LoadedTexture, shapeInfos }from '../assets/Interfaces/Interfaces';
 
 export class AppElement extends HTMLElement {
   public static observedAttributes = [];
@@ -101,7 +62,7 @@ export class AppElement extends HTMLElement {
       title +
       `</h1>
       <div id="videos" ></div>
-      <input id="ts" type="number" /><input type="button" id="button" ><p id="ts-result"></p>`;
+      <input id="ts" type="string" /><input type="button" id="button" ><p id="ts-result"></p>`;
   }
 }
 customElements.define('proto-webgl-root', AppElement);
@@ -110,50 +71,7 @@ const dataEditor = data.editor;
 
 let videoWidth: number, videoHeight: number;
 
-let camera: Camera, cameraP: Camera, scene: Scene, renderer: WebGLRenderer;
-
-interface LoadedTexture {
-  id: string;
-  texture: Texture;
-}
-
-interface LoadedFont {
-  name: string;
-  url: string;
-  font: Font;
-}
-
-interface Transform {
-  transform: {
-    translation: {
-      x: number;
-      y: number;
-      z: number;
-    };
-    rotation: {
-      x: number;
-      y: number;
-      z: number;
-    };
-    scale: {
-      x: number;
-      y: number;
-      z: number;
-    };
-  };
-}
-
-interface brandInfos extends Transform {
-  id: string;
-  width: number;
-  height: number;
-  depth: number;
-}
-
-interface shapeInfos extends brandInfos {
-  categoryId: string;
-  nameId: string;
-}
+let camera: Camera, scene: Scene, renderer: WebGLRenderer;
 
 let allFontsLoaded: Array<LoadedFont> = [],
   allTextureLoaded: Array<LoadedTexture> = [];
@@ -186,8 +104,6 @@ async function init() {
     0,
     1000
   );
-  cameraP = new PerspectiveCamera(45, videoWidth / videoHeight, 1, 1000);
-  //scene.add( cameraP );
 
   camera.position.z = 20;
   scene.add(camera);
@@ -208,12 +124,40 @@ async function init() {
 
   //Add them in threejs
   addAllVideosThree();
-  //getAllElements();
+  getAllElements();
   //TextLoader('salutttt', 'fun');
   //TextLoader('coucou', 'regular');
   //TextLoader('bonjour', 'headline');
+  scene.add(addSubtitles('salut', allFontsLoaded[0].font, scene, 1.2, 1920 / 2, 1080 / 2));
   playVideo('dd6a50d4-3f30-4007-a953-d9748b266462', 0);
   animation();
+
+  const input = <HTMLInputElement>document.getElementById('ts');
+
+  const sub = fromEvent(input, 'change');
+
+  sub.subscribe(val => scene.add(addSubtitles(input.value, allFontsLoaded[0].font,scene, 1.2, 1920 / 2, 1080 / 2)));
+}
+
+function CreateScene() {
+  (videoWidth = dataEditor.videoWidth), (videoHeight = dataEditor.videoHeight);
+
+  const newScene = new Scene();
+  newScene.background = new Color(0xfff0ff);
+
+  const newCamera = new OrthographicCamera(
+    videoWidth / -2,
+    videoWidth / 2,
+    videoHeight / -2,
+    videoHeight / 2,
+    0,
+    1000
+  );
+
+  newCamera.position.z = 20;
+  newScene.add(newCamera);
+
+  return scene;
 }
 
 function Composer() {
@@ -272,10 +216,12 @@ function Composer() {
       gl_FragColor = vec4( color  );
     }`,
   };
-
   grainEffect = new ShaderPass(grainEffectShader);
   grainEffect.renderToScreen = true;
-  composer.addPass(grainEffect);
+  //composer.addPass(grainEffect);
+
+  const FantomeEffect = new AfterimagePass() ;
+  //composer.addPass(FantomeEffect);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -289,9 +235,9 @@ let PlaneMat: ShaderMaterial;
 function animation() {
   requestAnimationFrame(animation);
 
-  let deltaTime = clock.getElapsedTime();
-
   PlaneMat.uniforms.uTime.value = clock.getElapsedTime();
+
+  let deltaTime = clock.getElapsedTime();
   grainEffect.uniforms["amount"].value = clock.getElapsedTime();
 
   composer.render(deltaTime);
@@ -358,7 +304,7 @@ function TransformShape(shapeElement: Mesh, element: shapeInfos) {
     element.transform.scale.y,
     element.transform.scale.z
   );
-  shapeElement.name = element.nameId;
+  shapeElement.name = element.name;
   scene.add(shapeElement);
 }
 
@@ -405,7 +351,7 @@ function loadTexture(id: string): Observable<LoadedTexture> {
 
 ///////////////////////Add Images to THREE////////////////////
 
-function addBrandThree(brandInfos: brandInfos) {
+function addBrandThree(brandInfos: shapeInfos) {
   const loadedtexture = allTextureLoaded.find(
     (element) => element.id === brandInfos.id
   );
@@ -418,23 +364,7 @@ function addBrandThree(brandInfos: brandInfos) {
       side: DoubleSide,
     })
   );
-  plane.position.set(
-    brandInfos.transform.translation.x,
-    brandInfos.transform.translation.y,
-    brandInfos.depth
-  );
-  plane.rotation.set(
-    MathUtils.degToRad(brandInfos.transform.rotation.x) + Math.PI,
-    MathUtils.degToRad(brandInfos.transform.rotation.y),
-    MathUtils.degToRad(brandInfos.transform.rotation.z)
-  );
-  plane.scale.set(
-    brandInfos.transform.scale.x,
-    brandInfos.transform.scale.y,
-    brandInfos.transform.scale.z
-  );
-  plane.name = brandInfos.id;
-  scene.add(plane);
+  TransformShape(plane, brandInfos);
 }
 
 ///////////////////////////////////////////////
@@ -467,6 +397,8 @@ async function createVideoHtmlElement(id: string) {
   console.log('function ', video.readyState);
 }
 
+const Scenes : Scene[] = [];
+
 //const observables$ = urls.map((url) => from(loadFontThree(url)));
 
 function addAllVideosThree() {
@@ -493,144 +425,10 @@ function addAllVideosThree() {
     );
     PlaneGeom.push(newGeometry);
 
-    let newMaterialRGBShift = new ShaderMaterial({
-      vertexShader: `varying vec2 vUv;
-      uniform float uTime;
-
-      vec3 mod289(vec3 x) {
-        return x - floor(x * (1.0 / 289.0)) * 289.0;
-      }
-      
-      vec4 mod289(vec4 x) {
-        return x - floor(x * (1.0 / 289.0)) * 289.0;
-      }
-      
-      vec4 permute(vec4 x) {
-           return mod289(((x*34.0)+1.0)*x);
-      }
-      
-      vec4 taylorInvSqrt(vec4 r)
-      {
-        return 1.79284291400159 - 0.85373472095314 * r;
-      }
-      
-      float snoise(vec3 v) {
-        const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
-        const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
-        
-        // First corner
-        vec3 i  = floor(v + dot(v, C.yyy) );
-        vec3 x0 =   v - i + dot(i, C.xxx) ;
-        
-        // Other corners
-        vec3 g = step(x0.yzx, x0.xyz);
-        vec3 l = 1.0 - g;
-        vec3 i1 = min( g.xyz, l.zxy );
-        vec3 i2 = max( g.xyz, l.zxy );
-      
-        //   x0 = x0 - 0.0 + 0.0 * C.xxx;
-        //   x1 = x0 - i1  + 1.0 * C.xxx;
-        //   x2 = x0 - i2  + 2.0 * C.xxx;
-        //   x3 = x0 - 1.0 + 3.0 * C.xxx;
-        vec3 x1 = x0 - i1 + C.xxx;
-        vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y
-        vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y
-        
-        // Permutations
-        i = mod289(i);
-        vec4 p = permute( permute( permute(
-                   i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
-                 + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))
-                 + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
-                 
-        // Gradients: 7x7 points over a square, mapped onto an octahedron.
-        // The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
-        float n_ = 0.142857142857; // 1.0/7.0
-        vec3  ns = n_ * D.wyz - D.xzx;
-      
-        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)
-      
-        vec4 x_ = floor(j * ns.z);
-        vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)
-      
-        vec4 x = x_ *ns.x + ns.yyyy;
-        vec4 y = y_ *ns.x + ns.yyyy;
-        vec4 h = 1.0 - abs(x) - abs(y);
-      
-        vec4 b0 = vec4( x.xy, y.xy );
-        vec4 b1 = vec4( x.zw, y.zw );
-      
-        //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;
-        //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;
-        vec4 s0 = floor(b0)*2.0 + 1.0;
-        vec4 s1 = floor(b1)*2.0 + 1.0;
-        vec4 sh = -step(h, vec4(0.0));
-      
-        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
-        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
-      
-        vec3 p0 = vec3(a0.xy,h.x);
-        vec3 p1 = vec3(a0.zw,h.y);
-        vec3 p2 = vec3(a1.xy,h.z);
-        vec3 p3 = vec3(a1.zw,h.w);
-        
-        // Normalise gradients
-        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
-        p0 *= norm.x;
-        p1 *= norm.y;
-        p2 *= norm.z;
-        p3 *= norm.w;
-        
-        // Mix final noise value
-        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-        m = m * m;
-        return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),
-                                      dot(p2,x2), dot(p3,x3) ) );
-      }
-      
-      void main() {
-        vUv = uv;
-
-        vec3 pos = position;
-        float noiseFreq = 3.5;
-        float noiseAmp = 10.0;
-        vec3 noisePos = vec3(pos.x, pos.y * noiseFreq + uTime, pos.z);
-        pos.x += snoise(noisePos) * noiseAmp;
-        pos.y += snoise(noisePos) * noiseAmp;
-      
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.);
-      }`,
-      fragmentShader: `uniform float uTime;
-      uniform sampler2D uTexture;
-      uniform float uAlpha;
-      varying vec2 uOffset;
-      varying vec2 vUv;
-
-      vec3 rgbShift(sampler2D textureimage, vec2 uv, vec2 offset ){
-        float r = texture2D(textureimage, uv + offset).r;
-        vec2 gb = texture2D(textureimage, uv).gb;
-        return vec3(r, gb);
-      }
-      
-      void main() {
-        vec2 uOffset = vec2(sin(uTime * 10.) / 50., sin(-uTime * 5.) / 50.);
-
-        vec3 color = rgbShift(uTexture, vUv, uOffset);
-        
-        gl_FragColor = vec4(color, uAlpha);
-      }
-      `,
-      uniforms: {
-        uTime: { value: 0.0 },
-        uTexture: { value: newTextureVideo },
-        uAlpha: { value: 1 },
-        uOffset: { value: new Vector2(0.02, 0.02) },
-      },
-      side: DoubleSide,
-    });
+    const newMaterialRGBShift = RGBEffectShaderMaterial(newTextureVideo);
     PlaneMat = newMaterialRGBShift;
 
-    let newMaterial = new MeshBasicMaterial({
+    const newMaterial = new MeshBasicMaterial({
       map: newTextureVideo,
       side: DoubleSide,
     });
@@ -647,7 +445,13 @@ function addAllVideosThree() {
       videoData!.transform.translation.y,
       0
     );
-    scene.add(newMesh);
+
+    const newScene = CreateScene();
+    Scenes.push(newScene);
+
+    newScene.add(newMesh);
+
+    console.log(Scenes);
   }
 }
 

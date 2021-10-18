@@ -40,10 +40,10 @@
       {
         "categoryId": "shape",
         "id": "square",
-        "nameId": "square",
-        "width": 430,
-        "height": 430,
-        "depth": 0,
+        "name": "square",
+        "width": 500,
+        "height": 1000,
+        "depth": 5,
         "transform": {
           "translation": {
             "x": 0,
@@ -65,9 +65,9 @@
       {
         "categoryId": "shape",
         "id": "circle",
-        "nameId": "circle",
-        "width": 130,
-        "height": 130,
+        "name": "circle",
+        "width": 32,
+        "height": 32,
         "depth": 0,
         "transform": {
           "translation": {
@@ -93,21 +93,21 @@
         "nameId": "Tempo",
         "width": 298,
         "height": 210,
-        "depth": 9,
+        "depth": 10,
         "transform": {
           "translation": {
-            "x": 450,
+            "x": 0,
             "y": 0,
             "z": 0
           },
           "rotation": {
             "x": 0,
             "y": 0,
-            "z": -20
+            "z": 0
           },
           "scale": {
             "x": 1,
-            "y": 1,
+            "y": -1,
             "z": 1
           }
         }
@@ -118,7 +118,7 @@
         "nameId": "Coca-Cola",
         "width": 614,
         "height": 192,
-        "depth": 0,
+        "depth": 2,
         "transform": {
           "translation": {
             "x": 0,
@@ -132,7 +132,7 @@
           },
           "scale": {
             "x": 1,
-            "y": 1,
+            "y": -1,
             "z": 1
           }
         }
@@ -150,7 +150,7 @@
       {
         "id": "headline",
         "nameId": "headline",
-        "url" : "../assets/Memphis.json",
+        "url": "../assets/Source_Sans_Pro.json",
         "style": {
           "fontFamily": "Roboto",
           "fontSize": "16pt",
@@ -163,7 +163,7 @@
       {
         "id": "regular",
         "nameId": "regular",
-        "url" : "../assets/Helvetica.json",
+        "url": "../assets/Memphis.json",
         "style": {
           "fontFamily": "Roboto",
           "fontSize": "14pt",
@@ -176,7 +176,7 @@
       {
         "id": "fun",
         "nameId": "fun",
-        "url" : "../assets/Memphis.json",
+        "url": "../assets/Helvetica.json",
         "style": {
           "fontFamily": "Roboto",
           "fontSize": "24pt",

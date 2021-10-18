@@ -19,8 +19,7 @@
     "@nrwl/workspace": "12.9.0",
     "@types/jest": "26.0.24",
     "@types/node": "14.14.33",
-    "@types/noisejs": "^0.0.28",
-    "@types/three": "0.132.2",
+    "@types/three": "^0.132.2",
     "@typescript-eslint/eslint-plugin": "~4.28.3",
     "@typescript-eslint/parser": "~4.28.3",
     "cypress": "^8.3.0",
@@ -37,7 +36,7 @@
     "noisejs": "^2.1.0",
     "regenerator-runtime": "0.13.7",
     "rxjs": "^7.4.0",
-    "three": "0.132.2",
+    "three": "^0.132.2",
     "tslib": "^2.0.0"
   }
 }
