@@ -90,7 +90,7 @@
       {
         "categoryId": "brand",
         "id": "tempo-logo",
-        "nameId": "Tempo",
+        "name": "Tempo",
         "width": 298,
         "height": 210,
         "depth": 10,
@@ -115,7 +115,7 @@
       {
         "categoryId": "brand",
         "id": "coca-logo",
-        "nameId": "Coca-Cola",
+        "name": "Coca-Cola",
         "width": 614,
         "height": 192,
         "depth": 2,

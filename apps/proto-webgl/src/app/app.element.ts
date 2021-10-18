@@ -128,7 +128,7 @@ async function init() {
   //TextLoader('salutttt', 'fun');
   //TextLoader('coucou', 'regular');
   //TextLoader('bonjour', 'headline');
-  scene.add(addSubtitles('salut', allFontsLoaded[0].font, scene, 1.2, 1920 / 2, 1080 / 2));
+  scene.add(addSubtitles('In literary theory, a text is any object that can be "read", whether this object is a work of literature, a street sign, an arrangement of buildings on a city block, or styles of clothing. It is a coherent set of signs that transmits some kind of informative message.', allFontsLoaded[1].font, scene, 0.7, 1920 / 2, 1080 / 2));
   playVideo('dd6a50d4-3f30-4007-a953-d9748b266462', 0);
   animation();
 
@@ -136,7 +136,7 @@ async function init() {
 
   const sub = fromEvent(input, 'change');
 
-  sub.subscribe(val => scene.add(addSubtitles(input.value, allFontsLoaded[0].font,scene, 1.2, 1920 / 2, 1080 / 2)));
+  sub.subscribe(val => scene.add(addSubtitles(input.value, allFontsLoaded[1].font,scene, 0.7, 1920 * 0.7, 1080 / 2)));
 }
 
 function CreateScene() {
