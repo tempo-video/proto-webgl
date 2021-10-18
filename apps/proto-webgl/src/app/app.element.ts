@@ -2,7 +2,23 @@
 import './app.element.scss';
 import * as THREE from 'three';
 import * as data from '../assets/editor-state.json';
+<<<<<<< Updated upstream
 import { rejects } from 'assert';
+=======
+import {
+  fromEvent,
+  Observable,
+  generate,
+  from,
+  forkJoin,
+  firstValueFrom,
+  zip,
+  of,
+} from 'rxjs';
+import { throttleTime, scan, map, defaultIfEmpty } from 'rxjs';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import RGBEffectShaderMaterial from '../assets/Shaders/VideosShaderMaterials';
+>>>>>>> Stashed changes
 
 export class AppElement extends HTMLElement {
   public static observedAttributes = [];
@@ -37,7 +53,13 @@ const raycaster = new THREE.Raycaster();
 const click = new THREE.Vector2();
 let UserHasClicked = false;
 
+<<<<<<< Updated upstream
 let goFront, goBehind, goLeft, goRight, scaleUp, scaleDown;
+=======
+const clock = new Clock();
+let composer: EffectComposer;
+let grainEffect: ShaderPass;
+>>>>>>> Stashed changes
 
 function init() {
   TouchKeyControl();
@@ -68,6 +90,7 @@ function init() {
 }
 init();
 
+<<<<<<< Updated upstream
 function onClick(event) {
   click.x = (event.clientX / window.innerWidth) * 2 - 1;
   click.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -98,6 +121,53 @@ function TouchKeyControl() {
       case ' ':
         console.log('space');
         break;
+=======
+function Composer() {
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+
+  const bloomPass = new BloomPass(
+    1, // strength
+    25, // kernel size
+    4, // sigma ?
+    256 // blur render target resolution
+  );
+  //composer.addPass(bloomPass);
+
+  const filmPass = new FilmPass(
+    0.35, // noise intensity
+    0.025, // scanline intensity
+    648, // scanline count
+    0 // grayscale
+  );
+  filmPass.renderToScreen = true;
+  //composer.addPass(filmPass);
+
+  const counter = 0.0;
+  const grainEffectShader = {
+    uniforms: {
+      tDiffuse: { value: null },
+      amount: { value: counter },
+    },
+    vertexShader: `varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix 
+        * modelViewMatrix 
+        * vec4( position, 1.0 );
+    }`,
+    fragmentShader: `uniform float amount;
+    uniform sampler2D tDiffuse;
+    varying vec2 vUv;
+  
+    float random( vec2 p )
+    {
+      vec2 K1 = vec2(
+        23.14069263277926, // e^pi (Gelfond's constant)
+        2.665144142690225 // 2^sqrt(2) (Gelfondâ€“Schneider constant)
+      );
+      return fract( cos( dot(p,K1) ) * 12345.6789 );
+>>>>>>> Stashed changes
     }
   };
 
@@ -127,10 +197,35 @@ function TouchKeyControl() {
   document.addEventListener('keyup', onKeyUp, false);
 }
 
+<<<<<<< Updated upstream
 function animation() {
   if (UserHasClicked) {
     raycaster.setFromCamera(click, camera);
     UserHasClicked = false;
+=======
+////////////////////////////////////////////////////////////////
+///////////////////////Fonctions en plus////////////////////////
+////////////////////////////////////////////////////////////////
+
+const PlaneGeom: PlaneBufferGeometry[] = [];
+
+let PlaneMat: ShaderMaterial;
+
+function animation() {
+  requestAnimationFrame(animation);
+
+  const deltaTime = clock.getElapsedTime();
+
+  PlaneMat.uniforms.uTime.value = clock.getElapsedTime();
+  grainEffect.uniforms["amount"].value = clock.getElapsedTime();
+
+  composer.render(deltaTime);
+}
+
+////////////////////////////////////////////////////////////////////
+//////////////////////////// ELEMENTS //////////////////////////////
+////////////////////////////////////////////////////////////////////
+>>>>>>> Stashed changes
 
     const intersects = raycaster.intersectObjects(scene.children);
 
@@ -138,6 +233,7 @@ function animation() {
       meshSelected = intersects[0].object;
     }
 
+<<<<<<< Updated upstream
     if (goRight) {
       meshSelected.position.x += 0.2;
     }
@@ -157,11 +253,86 @@ function animation() {
     if (scaleDown) {
       meshSelected.scale.x -= 0.01;
       meshSelected.scale.y -= 0.01;
+=======
+////////////////////////////Add Shape to THREE///////////////////////////
+
+function addShapeThree(shapeInfos: shapeInfos) {
+  switch (shapeInfos.id) {
+    case 'square': {
+      const square = new Mesh(
+        new PlaneGeometry(shapeInfos.width, shapeInfos.height),
+        new MeshBasicMaterial({
+          color: 0xff0f00,
+          side: DoubleSide,
+        })
+      );
+      TransformShape(square, shapeInfos);
+      break;
+    }
+    case 'circle': {
+      const circle = new Mesh(
+        new CircleGeometry(shapeInfos.width, 32),
+        new MeshBasicMaterial({
+          color: 0xfffff0,
+          side: DoubleSide,
+        })
+      );
+      TransformShape(circle, shapeInfos);
+      break;
+>>>>>>> Stashed changes
     }
   }
 
+<<<<<<< Updated upstream
   requestAnimationFrame(animation);
   renderer.render(scene, camera);
+=======
+function TransformShape(shapeElement: Mesh, element: shapeInfos) {
+  shapeElement.position.set(
+    element.transform.translation.x,
+    element.transform.translation.y,
+    element.depth
+  );
+  shapeElement.rotation.set(
+    element.transform.rotation.x,
+    element.transform.rotation.y,
+    element.transform.rotation.z
+  );
+  shapeElement.scale.set(
+    element.transform.scale.x,
+    element.transform.scale.y,
+    element.transform.scale.z
+  );
+  shapeElement.name = element.nameId;
+  scene.add(shapeElement);
+}
+
+//////////////Load Image//////////////////
+
+function loadTextureImage(textureInfos: string) {
+  return new Promise<Texture>(function (resolve, reject) {
+    const textureLoader = new TextureLoader();
+    textureLoader.load(
+      '../assets/' + textureInfos + '.png',
+      function (texture) {
+        resolve(texture);
+      },
+      undefined,
+      function (err) {
+        reject(err);
+      }
+    );
+  });
+}
+
+async function TexturesLoader() {
+  const textureIds = dataEditor.elementModels
+    .filter((element) => element.categoryId === 'brand')
+    .map((element) => element.id);
+  const loadedTextures$ = loadTextures(textureIds);
+  const promise = firstValueFrom(loadedTextures$);
+  allTextureLoaded = await promise;
+>>>>>>> Stashed changes
 }
 
 function videoLoading(video) {
@@ -177,10 +348,45 @@ function hideAllVideos() {
   }
 }
 
+<<<<<<< Updated upstream
 function playVideo(video) {
   return new Promise((resolve) => {
     resolve(video.play());
   })
+=======
+///////////////////////Add Images to THREE////////////////////
+
+function addBrandThree(brandInfos: brandInfos) {
+  const loadedtexture = allTextureLoaded.find(
+    (element) => element.id === brandInfos.id
+  );
+  const texture = loadedtexture!.texture;
+  const plane = new Mesh(
+    new PlaneGeometry(brandInfos.width, brandInfos.height),
+    new MeshBasicMaterial({
+      color: new Color(),
+      map: texture,
+      side: DoubleSide,
+    })
+  );
+  plane.position.set(
+    brandInfos.transform.translation.x,
+    brandInfos.transform.translation.y,
+    brandInfos.depth
+  );
+  plane.rotation.set(
+    MathUtils.degToRad(brandInfos.transform.rotation.x) + Math.PI,
+    MathUtils.degToRad(brandInfos.transform.rotation.y),
+    MathUtils.degToRad(brandInfos.transform.rotation.z)
+  );
+  plane.scale.set(
+    brandInfos.transform.scale.x,
+    brandInfos.transform.scale.y,
+    brandInfos.transform.scale.z
+  );
+  plane.name = brandInfos.id;
+  scene.add(plane);
+>>>>>>> Stashed changes
 }
 
 function setATimeout(ms) {
@@ -203,31 +409,54 @@ async function getAllVideos() {
 
 function addAllVideosThree() {
   for (let i = 0; i < dataEditor.tracks[0].itemIds.length; i++) {
-    let videos = dataEditor.tracks[0].itemIds[i];
+    const videos = dataEditor.tracks[0].itemIds[i];
 
-    let videoElement = <HTMLVideoElement>document.getElementById(videos);
+    const videoElement = <HTMLVideoElement>document.getElementById(videos);
 
-    let newVideoWidth = videoWidth,
+    const newVideoWidth = videoWidth,
       newVideoHeight = videoHeight;
 
+<<<<<<< Updated upstream
     let newTextureVideo = new THREE.VideoTexture(videoElement);
+=======
+    const newTextureVideo = new VideoTexture(videoElement);
+>>>>>>> Stashed changes
 
-    let videoData = dataEditor.trackItems.find(
+    const videoData = dataEditor.trackItems.find(
       (element) => element.id === videos
     );
 
+<<<<<<< Updated upstream
     let newGeometry = new THREE.PlaneGeometry(
       newVideoWidth * videoData.transform.scale.x,
       newVideoHeight * videoData.transform.scale.y
+=======
+    const newGeometry = new PlaneGeometry(
+      newVideoWidth * videoData!.transform.scale.x,
+      newVideoHeight * videoData!.transform.scale.y,
+      10,
+      10
+>>>>>>> Stashed changes
     );
 
+<<<<<<< Updated upstream
     let newMaterial = new THREE.MeshBasicMaterial({
       color: new THREE.Color(),
+=======
+    const newMaterialRGBShift = RGBEffectShaderMaterial(newTextureVideo);
+    PlaneMat = newMaterialRGBShift;
+
+    const newMaterial = new MeshBasicMaterial({
+>>>>>>> Stashed changes
       map: newTextureVideo,
       side: THREE.DoubleSide,
     });
 
+<<<<<<< Updated upstream
     let newMesh = new THREE.Mesh(newGeometry, newMaterial);
+=======
+    const newMesh = new Mesh(newGeometry, newMaterialRGBShift);
+>>>>>>> Stashed changes
     newMesh.name = videos;
     newMesh.rotation.set(
       Math.PI + videoData.transform.rotation.x,
@@ -251,7 +480,14 @@ async function getVideoByTs(ts) {
 
   console.log('timestamp', ts);
 
+<<<<<<< Updated upstream
   let videosOnTs = [];
+=======
+async function playVideo(id: string, start: number) {
+  const videoElement = <HTMLVideoElement>document.getElementById(id);
+  console.log(videoElement);
+  const videoObject = scene.getObjectByName(id);
+>>>>>>> Stashed changes
 
   for (let i = 0; i < dataEditor.trackItems.length; i++) {
     let video = dataEditor.trackItems[i];
@@ -259,6 +495,7 @@ async function getVideoByTs(ts) {
     let start = video.ts;
     let end = start + video.duration;
 
+<<<<<<< Updated upstream
     if (start <= ts && ts <= end) {
       videosOnTs.push(video);
     }
@@ -276,6 +513,25 @@ async function getVideoByTs(ts) {
       let video = dataEditor.trackItems[i];
       if (video.ts > ts) {
         nextVideos.push(video.ts);
+=======
+///////////////////////////////////////////////////////////////
+//////////////////////////// TEXT /////////////////////////////
+///////////////////////////////////////////////////////////////
+
+///////////////////////Load Font///////////////////////////////
+
+function loadFontThree(url: string) {
+  return new Promise<Font>(function (resolve, reject) {
+    const fontLoader = new FontLoader();
+    fontLoader.load(
+      url,
+      function (font) {
+        resolve(font);
+      },
+      undefined,
+      function (err) {
+        reject(err);
+>>>>>>> Stashed changes
       }
     }
     if (nextVideos.length > 0 && videoPauseStatus) {
@@ -305,6 +561,7 @@ function closest(num, arr) {
   return curr;
 }
 
+<<<<<<< Updated upstream
 async function afficheVideo(videos, ts) {
   let videosElements = <HTMLVideoElement>document.getElementById(videos[0].id);
 
@@ -313,6 +570,33 @@ async function afficheVideo(videos, ts) {
   let ThreeObject = scene.getObjectByName(videos[0].id);
 
   hideAllVideos();
+=======
+///////////////////////Add Text to THREE/////////////////////////
+
+function TextLoader(textString: string, type: string) {
+  const fontIndex = allFontsLoaded.findIndex((element) => {
+    return element.name === type;
+  });
+  console.log(allFontsLoaded[fontIndex]);
+  const textGeo = new TextGeometry(textString, {
+    size: 100,
+    height: 100,
+    curveSegments: 6,
+    font: allFontsLoaded[fontIndex].font,
+  });
+  const color = new Color();
+  color.setRGB(255, 255, 255);
+  const textMaterial = new MeshBasicMaterial({
+    color: color,
+    side: DoubleSide,
+  });
+  const text = new Mesh(textGeo, textMaterial);
+  text.name = type; // Changer sur le id du texte
+  text.position.set(-200, 0, 8);
+  text.rotation.set(Math.PI, 0, 0);
+  scene.add(text);
+}
+>>>>>>> Stashed changes
 
   ThreeObject.visible = true;
 
