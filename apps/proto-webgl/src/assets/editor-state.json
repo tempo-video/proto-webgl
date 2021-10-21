@@ -96,7 +96,7 @@
         "depth": 10,
         "transform": {
           "translation": {
-            "x": 0,
+            "x": 300,
             "y": 0,
             "z": 0
           },
@@ -121,8 +121,8 @@
         "depth": 2,
         "transform": {
           "translation": {
-            "x": 0,
-            "y": 0,
+            "x": -500,
+            "y": -200,
             "z": 0
           },
           "rotation": {
@@ -163,7 +163,7 @@
       {
         "id": "regular",
         "nameId": "regular",
-        "url": "../assets/Memphis.json",
+        "url": "../assets/Open_Sans.json",
         "style": {
           "fontFamily": "Roboto",
           "fontSize": "14pt",
@@ -200,6 +200,8 @@
         "id": "3f0a7bfe-94b3-4a58-95ff-e72f3a30e8ea",
         "label": "Video",
         "itemIds": [
+          "dd6a50d4-3f30-4007-a953-d9748b266462",
+          "ede08c9d-2483-454d-8478-478c32cfc7d5",
           "dd6a50d4-3f30-4007-a953-d9748b266462"
         ]
       }

@@ -1,4 +1,4 @@
-import {Texture, Font} from 'three';
+import {Texture, Font, Mesh} from 'three';
 
 export interface LoadedTexture {
   id: string;
@@ -38,6 +38,12 @@ export interface shapeInfos extends Transform {
   width: number;
   height: number;
   depth: number;
+}
+
+export interface element {
+  element: Mesh;
+  name: string;
+  visibility: boolean;
 }
 
 /*

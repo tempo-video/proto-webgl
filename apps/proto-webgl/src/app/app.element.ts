@@ -28,6 +28,10 @@ import {
   ShaderMaterial,
   Shader,
   Material,
+  RGBFormat,
+  LinearFilter,
+  WebGLRenderTarget,
+  ImageLoader,
 } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass';
@@ -35,6 +39,7 @@ import { BloomPass } from 'three/examples/jsm/postprocessing/BloomPass';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterImagePass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass';
 import * as data from '../assets/editor-state.json';
 import {
   fromEvent,
@@ -46,23 +51,27 @@ import {
   zip,
   of,
 } from 'rxjs';
-import { throttleTime, scan, map, defaultIfEmpty } from 'rxjs';
-import RGBEffectShaderMaterial from '../assets/Shaders/VideosShaderMaterials';
+import { map, defaultIfEmpty } from 'rxjs';
+import { DigitalGlitch } from '../assets/Shaders/VideosShaderMaterials';
 import addSubtitles from './subtitles/addSubtitles';
-import { LoadedFont, LoadedTexture, shapeInfos }from '../assets/Interfaces/Interfaces';
+import {
+  LoadedFont,
+  LoadedTexture,
+  shapeInfos,
+  element,
+} from '../assets/Interfaces/Interfaces';
+import { transitionShader } from '../assets/TransitionTest/TransitionTest';
+import { ChooseTransition, ChooseElement, ChooseEffects } from '../assets/GUI/gui';
 
 export class AppElement extends HTMLElement {
   public static observedAttributes = [];
 
   connectedCallback() {
     const title = 'proto-webgl';
-    this.innerHTML =
-      `
-      <h1>` +
-      title +
-      `</h1>
-      <div id="videos" ></div>
-      <input id="ts" type="string" /><input type="button" id="button" ><p id="ts-result"></p>`;
+    this.innerHTML = `<div id="videos" ></div>
+      <div id="frame">
+      <input id="ts" type="string" /><input type="button" id="button" ><p id="ts-result"></p>
+      <div id="container"><div id="guiAll" ><div id="gui" ></div><div id="guiFlex" ><div id="guiElem" ></div><div id="guiEffects" ></div></div></div><div id="renderer" ></div></div></div>`;
   }
 }
 customElements.define('proto-webgl-root', AppElement);
@@ -76,15 +85,10 @@ let camera: Camera, scene: Scene, renderer: WebGLRenderer;
 let allFontsLoaded: Array<LoadedFont> = [],
   allTextureLoaded: Array<LoadedTexture> = [];
 
-let meshSelected: Object3D;
-const raycaster = new Raycaster();
-const click = new Vector2();
-
-var clock = new Clock();
+let clock = new Clock();
+let clockTransition: Clock;
 let composer: EffectComposer;
 let grainEffect: ShaderPass;
-var delta = 0;
-var time = 0;
 
 ////////////////////////////////////////////////////////
 ////////////////Initialisation de THREE/////////////////
@@ -109,8 +113,18 @@ async function init() {
   scene.add(camera);
 
   renderer = new WebGLRenderer({ antialias: true });
-  renderer.setSize(videoWidth / 2, videoHeight / 2);
-  document.body.appendChild(renderer.domElement);
+  renderer.setSize(videoWidth * 0.4, videoHeight * 0.4);
+  document.getElementById('renderer')!.appendChild(renderer.domElement);
+
+  const PlaneTransition = new Mesh(
+    new PlaneGeometry(videoWidth, videoHeight),
+    transitionShader
+  );
+
+  PlaneTransition.position.set(0, 0, 0);
+  PlaneTransition.rotation.set(Math.PI, 0, 0);
+
+  scene.add(PlaneTransition);
 
   Composer();
 
@@ -125,18 +139,57 @@ async function init() {
   //Add them in threejs
   addAllVideosThree();
   getAllElements();
-  //TextLoader('salutttt', 'fun');
+  TextLoader('salutttt', 'regular');
   //TextLoader('coucou', 'regular');
   //TextLoader('bonjour', 'headline');
-  scene.add(addSubtitles('In literary theory, a text is any object that can be "read", whether this object is a work of literature, a street sign, an arrangement of buildings on a city block, or styles of clothing. It is a coherent set of signs that transmits some kind of informative message.', allFontsLoaded[1].font, scene, 0.7, 1920 / 2, 1080 / 2));
+  //addSubtitles('In literary theory, a text is any object that can be "read", whether this object is a work of literature, a street sign, an arrangement of buildings on a city block, or styles of clothing. It is a coherent set of signs that transmits some kind of informative message.', allFontsLoaded[1].font, scene, 1, 1920 * 0.6, 1080 / 2);
   playVideo('dd6a50d4-3f30-4007-a953-d9748b266462', 0);
+  playVideo('ede08c9d-2483-454d-8478-478c32cfc7d5', 0);
+  ChooseElement(Elements);
   animation();
+
 
   const input = <HTMLInputElement>document.getElementById('ts');
 
-  const sub = fromEvent(input, 'change');
+  fromEvent(input, 'change').subscribe(() =>
+    addSubtitles(
+      input.value,
+      allFontsLoaded[1].font,
+      scene,
+      0.7,
+      1920 * 0.6,
+      1080 / 2
+    )
+  );
 
-  sub.subscribe(val => scene.add(addSubtitles(input.value, allFontsLoaded[1].font,scene, 0.7, 1920 * 0.7, 1080 / 2)));
+  fromEvent(document.getElementById('guiElem')!, 'click').subscribe((event) => addElement((<HTMLParagraphElement>event.target).id));
+
+  fromEvent(document.getElementById('gui')!, 'click').subscribe((event) =>
+    TransitionGoF(
+      'ede08c9d-2483-454d-8478-478c32cfc7d5',
+      (<HTMLImageElement>event.target!).id
+    )
+  );
+}
+
+function addElement(name: string) {
+  const allElements = of(Elements);
+
+  allElements
+    .pipe(map((x) => x.filter((y) => y.name === name)))
+    .subscribe((elements) => elements.map((element) => ShowElement(element)));
+}
+
+function ShowElement(elem: element) {
+  if (!elem.visibility) {
+    const elementThree = elem.element;
+    elementThree.name = elem.name;
+    scene.add(elementThree);
+    elem.visibility = true;
+  } else {
+    scene.remove(elem.element);
+    elem.visibility = false;
+  }
 }
 
 function CreateScene() {
@@ -157,71 +210,14 @@ function CreateScene() {
   newCamera.position.z = 20;
   newScene.add(newCamera);
 
-  return scene;
+  return newScene;
 }
 
 function Composer() {
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
 
-  const bloomPass = new BloomPass(
-    1, // strength
-    25, // kernel size
-    4, // sigma ?
-    256 // blur render target resolution
-  );
-  //composer.addPass(bloomPass);
-
-  const filmPass = new FilmPass(
-    0.35, // noise intensity
-    0.025, // scanline intensity
-    648, // scanline count
-    0 // grayscale
-  );
-  filmPass.renderToScreen = true;
-  //composer.addPass(filmPass);
-
-  var counter = 0.0;
-  var grainEffectShader = {
-    uniforms: {
-      tDiffuse: { value: null },
-      amount: { value: counter },
-    },
-    vertexShader: `varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix 
-        * modelViewMatrix 
-        * vec4( position, 1.0 );
-    }`,
-    fragmentShader: `uniform float amount;
-    uniform sampler2D tDiffuse;
-    varying vec2 vUv;
-  
-    float random( vec2 p )
-    {
-      vec2 K1 = vec2(
-        23.14069263277926, // e^pi (Gelfond's constant)
-        2.665144142690225 // 2^sqrt(2) (Gelfondâ€“Schneider constant)
-      );
-      return fract( cos( dot(p,K1) ) * 12345.6789 );
-    }
-  
-    void main() {
-  
-      vec4 color = texture2D( tDiffuse, vUv );
-      vec2 uvRandom = vUv;
-      uvRandom.y *= random(vec2(uvRandom.y,amount));
-      color.rgb += random(uvRandom)*0.25;
-      gl_FragColor = vec4( color  );
-    }`,
-  };
-  grainEffect = new ShaderPass(grainEffectShader);
-  grainEffect.renderToScreen = true;
-  //composer.addPass(grainEffect);
-
-  const FantomeEffect = new AfterimagePass() ;
-  //composer.addPass(FantomeEffect);
+  ChooseEffects(composer);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -234,13 +230,45 @@ let PlaneMat: ShaderMaterial;
 
 function animation() {
   requestAnimationFrame(animation);
-
-  PlaneMat.uniforms.uTime.value = clock.getElapsedTime();
-
   let deltaTime = clock.getElapsedTime();
-  grainEffect.uniforms["amount"].value = clock.getElapsedTime();
+
+  //PlaneMat.uniforms.uTime.value = clock.getElapsedTime();
+
+  //grainEffect.uniforms['amount'].value = clock.getElapsedTime();
 
   composer.render(deltaTime);
+}
+
+function TransitionGoF(VideoId: string, index: string) {
+  if (index.includes('transition')) {
+    const transitionTexture = new TextureLoader().load(
+      '../assets/TransitionTest/Assets/' + index + '.png'
+    );
+
+    transitionShader.uniforms.tMixTexture.value = transitionTexture;
+
+    let videoElement = <HTMLVideoElement>document.getElementById(VideoId);
+    videoElement.play();
+    videoElement.currentTime = 0;
+
+    transitionShader.uniforms.tDiffuse1.value = new VideoTexture(videoElement);
+
+    clockTransition = new Clock();
+
+    TransitionAnimation();
+  }
+}
+
+let TransitionSpeed: number = 1;
+
+function TransitionAnimation() {
+  let deltaTime: number = clockTransition.getElapsedTime();
+
+  transitionShader.uniforms.mixRatio.value = deltaTime * TransitionSpeed;
+
+  if (deltaTime < 1 / TransitionSpeed) {
+    requestAnimationFrame(TransitionAnimation);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -288,6 +316,8 @@ function addShapeThree(shapeInfos: shapeInfos) {
   }
 }
 
+const Elements: element[] = [];
+
 function TransformShape(shapeElement: Mesh, element: shapeInfos) {
   shapeElement.position.set(
     element.transform.translation.x,
@@ -304,8 +334,11 @@ function TransformShape(shapeElement: Mesh, element: shapeInfos) {
     element.transform.scale.y,
     element.transform.scale.z
   );
-  shapeElement.name = element.name;
-  scene.add(shapeElement);
+  Elements.push({
+    element: shapeElement,
+    name: element.name,
+    visibility: false,
+  });
 }
 
 //////////////Load Image//////////////////
@@ -381,9 +414,7 @@ function videoLoading(video: HTMLVideoElement) {
 async function getAllVideos() {
   const IdsVideo = dataEditor.tracks[0].itemIds;
 
-  const videoElements = IdsVideo.map((element) =>
-    createVideoHtmlElement(element)
-  );
+  IdsVideo.map((id) => createVideoHtmlElement(id));
 }
 
 async function createVideoHtmlElement(id: string) {
@@ -397,9 +428,7 @@ async function createVideoHtmlElement(id: string) {
   console.log('function ', video.readyState);
 }
 
-const Scenes : Scene[] = [];
-
-//const observables$ = urls.map((url) => from(loadFontThree(url)));
+const Scenes: Scene[] = [];
 
 function addAllVideosThree() {
   console.log('lancer addAllVideosThree');
@@ -413,6 +442,8 @@ function addAllVideosThree() {
 
     let newTextureVideo = new VideoTexture(videoElement);
 
+    transitionShader.uniforms.tDiffuse2.value = newTextureVideo;
+
     let videoData = dataEditor.trackItems.find(
       (element) => element.id === videos
     );
@@ -425,8 +456,15 @@ function addAllVideosThree() {
     );
     PlaneGeom.push(newGeometry);
 
-    const newMaterialRGBShift = RGBEffectShaderMaterial(newTextureVideo);
+    const newMaterialRGBShift = new ShaderMaterial(DigitalGlitch);
     PlaneMat = newMaterialRGBShift;
+
+    const newTextureDispl = new ImageLoader().load(
+      'assets/TransitionTest/Assets/transition19.png'
+    );
+
+    newMaterialRGBShift.uniforms.tDiffuse.value = newTextureVideo;
+    newMaterialRGBShift.uniforms.tDisp.value = newTextureDispl;
 
     const newMaterial = new MeshBasicMaterial({
       map: newTextureVideo,
@@ -451,7 +489,7 @@ function addAllVideosThree() {
 
     newScene.add(newMesh);
 
-    console.log(Scenes);
+    console.log('Scenes', Scenes);
   }
 }
 
@@ -557,8 +595,8 @@ function TextLoader(textString: string, type: string) {
   switch (vid){
     case 'PlayVideo' :
       break;
-  }
-})
+  }})
 */
 
 init();
+ChooseTransition();
