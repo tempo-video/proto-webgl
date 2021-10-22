@@ -31,6 +31,12 @@ export interface Transform {
   };
 }
 
+export interface effect{
+  name: string;
+  effect: any;
+  visibility: boolean;
+}
+
 export interface shapeInfos extends Transform {
   categoryId: string;
   name: string;

@@ -3,13 +3,11 @@ import { BloomPass } from 'three/examples/jsm/postprocessing/BloomPass';
 import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass';
 import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import { AdaptiveToneMappingPass } from 'three/examples/jsm/postprocessing/AdaptiveToneMappingPass';
+import { BokehPass, BokehPassParamters } from 'three/examples/jsm/postprocessing/BokehPass';
+import { Camera, Scene } from 'three';
 
-const BloomPassComp = new BloomPass(
-  1, // strength
-  25, // kernel size
-  4, // sigma ?
-  256 // blur render target resolution
-);
+const BloomPassComp = new BloomPass();
 
 const FilmPassComp = new FilmPass(
   0.35, // noise intensity
@@ -18,7 +16,6 @@ const FilmPassComp = new FilmPass(
   0 // grayscale
 );
 FilmPassComp.renderToScreen = true;
-//composer.addPass(filmPass);
 
 let counter = 0.0;
 let grainEffectShader = {
@@ -62,10 +59,18 @@ const GlitchPassComp = new GlitchPass();
 
 const FantomePassComp = new AfterimagePass();
 
+const AdaptivePassComp = new AdaptiveToneMappingPass();
+
+const BokehPassComp = function (scene: Scene, camera: Camera, bokehparams: BokehPassParamters){
+    return new BokehPass(scene, camera, bokehparams);
+}
+
 export {
   BloomPassComp,
   FilmPassComp,
   GlitchPassComp,
   FantomePassComp,
   GrainPassComp,
+  AdaptivePassComp,
+  BokehPassComp
 };

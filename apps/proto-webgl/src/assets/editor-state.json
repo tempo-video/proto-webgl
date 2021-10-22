@@ -200,7 +200,7 @@
         "id": "3f0a7bfe-94b3-4a58-95ff-e72f3a30e8ea",
         "label": "Video",
         "itemIds": [
-          "dd6a50d4-3f30-4007-a953-d9748b266462",
+          "a6a7e1aa-c53f-47cd-8832-2df473b27322",
           "ede08c9d-2483-454d-8478-478c32cfc7d5",
           "dd6a50d4-3f30-4007-a953-d9748b266462"
         ]
@@ -279,7 +279,7 @@
             "z": 1
           }
         },
-        "videoId": "5e329242-663e-4869-b76b-876a624039e5",
+        "videoId": "test-video3",
         "videoOffset": 10280
       }
     ],

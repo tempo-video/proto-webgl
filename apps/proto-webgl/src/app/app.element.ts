@@ -61,7 +61,9 @@ import {
   element,
 } from '../assets/Interfaces/Interfaces';
 import { transitionShader } from '../assets/TransitionTest/TransitionTest';
-import { ChooseTransition, ChooseElement, ChooseEffects } from '../assets/GUI/gui';
+import { ChooseTransition, ChooseElement, ChooseEffects, EffectsCreate, composerAnimation } from '../assets/GUI/gui';
+
+export {scene, camera};
 
 export class AppElement extends HTMLElement {
   public static observedAttributes = [];
@@ -217,6 +219,7 @@ function Composer() {
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
 
+  EffectsCreate();
   ChooseEffects(composer);
 }
 
@@ -233,10 +236,7 @@ function animation() {
   let deltaTime = clock.getElapsedTime();
 
   //PlaneMat.uniforms.uTime.value = clock.getElapsedTime();
-
-  //grainEffect.uniforms['amount'].value = clock.getElapsedTime();
-
-  composer.render(deltaTime);
+  composerAnimation(composer, deltaTime);
 }
 
 function TransitionGoF(VideoId: string, index: string) {
@@ -450,9 +450,7 @@ function addAllVideosThree() {
 
     let newGeometry = new PlaneGeometry(
       newVideoWidth * videoData!.transform.scale.x,
-      newVideoHeight * videoData!.transform.scale.y,
-      10,
-      10
+      newVideoHeight * videoData!.transform.scale.y
     );
     PlaneGeom.push(newGeometry);
 
@@ -573,7 +571,7 @@ function TextLoader(textString: string, type: string) {
   console.log(allFontsLoaded[fontIndex]);
   var textGeo = new TextGeometry(textString, {
     size: 100,
-    height: 100,
+    height: 0,
     curveSegments: 6,
     font: allFontsLoaded[fontIndex].font,
   });
