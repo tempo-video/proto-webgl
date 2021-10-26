@@ -1,4 +1,5 @@
-import {Texture, Font, Mesh} from 'three';
+import {Texture, Font, Mesh, WebGLRenderTarget, Scene} from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 
 export interface LoadedTexture {
   id: string;
@@ -50,6 +51,22 @@ export interface element {
   element: Mesh;
   name: string;
   visibility: boolean;
+}
+
+export interface sceneBuffer {
+  scene: Scene;
+  fbo: WebGLRenderTarget;
+  render: () => void;
+  id: string;
+  composer: EffectComposer;
+}
+
+export interface videosInfos extends Transform{
+  id: string;
+  ts: number;
+  type: string;
+  videoId: string;
+  videoOffset: number;
 }
 
 /*

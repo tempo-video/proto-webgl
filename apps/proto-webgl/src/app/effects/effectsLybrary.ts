@@ -5,6 +5,7 @@ import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { AdaptiveToneMappingPass } from 'three/examples/jsm/postprocessing/AdaptiveToneMappingPass';
 import { BokehPass, BokehPassParamters } from 'three/examples/jsm/postprocessing/BokehPass';
+import { KaleidoShader } from 'three/examples/jsm/shaders/KaleidoShader';
 import { Camera, Scene } from 'three';
 
 const BloomPassComp = new BloomPass();
@@ -18,7 +19,7 @@ const FilmPassComp = new FilmPass(
 FilmPassComp.renderToScreen = true;
 
 let counter = 0.0;
-let grainEffectShader = {
+const grainEffectShader = {
   uniforms: {
     tDiffuse: { value: null },
     amount: { value: counter },
@@ -52,7 +53,7 @@ let grainEffectShader = {
       gl_FragColor = vec4( color  );
     }`,
 };
-let GrainPassComp = new ShaderPass(grainEffectShader);
+const GrainPassComp = new ShaderPass(grainEffectShader);
 GrainPassComp.renderToScreen = true;
 
 const GlitchPassComp = new GlitchPass();
@@ -60,6 +61,12 @@ const GlitchPassComp = new GlitchPass();
 const FantomePassComp = new AfterimagePass();
 
 const AdaptivePassComp = new AdaptiveToneMappingPass();
+
+const KaleidoUni = KaleidoShader;
+KaleidoUni.uniforms.angle.value = 10;
+KaleidoUni.uniforms.sides.value = 5;
+
+const KaleidoPassComp = new ShaderPass(KaleidoUni);
 
 const BokehPassComp = function (scene: Scene, camera: Camera, bokehparams: BokehPassParamters){
     return new BokehPass(scene, camera, bokehparams);
@@ -72,5 +79,6 @@ export {
   FantomePassComp,
   GrainPassComp,
   AdaptivePassComp,
-  BokehPassComp
+  BokehPassComp,
+  KaleidoPassComp
 };

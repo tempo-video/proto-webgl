@@ -150,7 +150,7 @@
       {
         "id": "headline",
         "nameId": "headline",
-        "url": "../assets/Source_Sans_Pro.json",
+        "url": "../assets/fonts/Source_Sans_Pro.json",
         "style": {
           "fontFamily": "Roboto",
           "fontSize": "16pt",
@@ -163,7 +163,7 @@
       {
         "id": "regular",
         "nameId": "regular",
-        "url": "../assets/Open_Sans.json",
+        "url": "../assets/fonts/Open_Sans.json",
         "style": {
           "fontFamily": "Roboto",
           "fontSize": "14pt",
@@ -176,7 +176,7 @@
       {
         "id": "fun",
         "nameId": "fun",
-        "url": "../assets/Helvetica.json",
+        "url": "../assets/fonts/Helvetica.json",
         "style": {
           "fontFamily": "Roboto",
           "fontSize": "24pt",
@@ -254,7 +254,7 @@
             "z": 1
           }
         },
-        "videoId": "test-video2",
+        "videoId": "test-video3",
         "videoOffset": 6780
       },
       {
@@ -279,7 +279,7 @@
             "z": 1
           }
         },
-        "videoId": "test-video3",
+        "videoId": "test-video2",
         "videoOffset": 10280
       }
     ],

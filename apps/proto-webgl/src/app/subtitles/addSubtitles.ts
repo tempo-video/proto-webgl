@@ -21,7 +21,7 @@ function addSubtitles(
   maxHeight: number
 ) {
   if (scene.getObjectByName('Subtitle')) {
-    let objectToRemove: Object3D[] = [];
+    const objectToRemove: Object3D[] = [];
     for(let k = 0; k < scene.children.length; k += 1){
       if(scene.children[k].name === 'Subtitle'){
         objectToRemove.push(scene.children[k]);
@@ -39,7 +39,7 @@ function addSubtitles(
   TextMesh = createTextMesh(text, size, font);
   const TBB = new Box3().setFromObject(TextMesh);
   TextMesh.position.set(-((TBB.max.x - TBB.min.x) / 2), maxHeight - 30, 10);
-  TextMesh.rotation.set(Math.PI, 0, 0);
+  TextMesh.rotation.set(0, 0, 0);
 
   TextMesh.name = 'Subtitle';
 
@@ -48,22 +48,22 @@ function addSubtitles(
 
 function SpliceText(text: string, size: number, font: Font, maxWidth: number, scene: Scene) {
   if (!testWidthText(createTextMesh(text, size, font), maxWidth)) {
-    let newTextArray: string[] = text.split(' ', 2);
+    const newTextArray: string[] = text.split(' ', 2);
     let newText: string = '';
     for (const textFor of newTextArray) {
       newText += textFor + ' ';
     }
-    let i = 4;
+    let i = 2;
     while (testWidthText(createTextMesh(newText, size, font), maxWidth)) {
-      let newTextArrayWhile: string[] = text.split(' ', i);
+      const newTextArrayWhile: string[] = text.split(' ', i);
       newText = '';
       for (const textFor of newTextArrayWhile) {
         newText += textFor + ' ';
       }
-      i += 2;
+      i += 3;
     }
     for (let f = 0; f < text.split(' ').length / i; f++) {
-      let textArray: string[] = text.split(' ').splice(f * i, i);
+      const textArray: string[] = text.split(' ').splice(f * i, i);
       let textToCreate: string = '';
       for (const txt of textArray) {
         textToCreate += txt + ' ';

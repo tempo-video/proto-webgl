@@ -1,5 +1,5 @@
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
-import { element, effect } from '../Interfaces/Interfaces';
+import { element, effect } from '../interfaces/Interfaces';
 import {
   BloomPassComp,
   FilmPassComp,
@@ -8,7 +8,8 @@ import {
   GrainPassComp,
   AdaptivePassComp,
   BokehPassComp,
-} from '../../app/effects/EffectsLybrairie';
+  KaleidoPassComp
+} from '../../app/effects/effectsLybrary';
 import { fromEvent, of, map } from 'rxjs';
 import { scene, camera } from '../../app/app.element';
 
@@ -22,7 +23,7 @@ function ChooseTransition() {
   let htmlElements: string = '<ul>';
   for (let i = 0; i < textures.length; i++) {
     htmlElements +=
-      '<li><img src="assets/TransitionTest/Assets/' +
+      '<li><img src="assets/transitions/' +
       textures[i] +
       '.png" id="' +
       textures[i] +
@@ -33,7 +34,6 @@ function ChooseTransition() {
 }
 
 function ChooseElement(Elements: element[]) {
-  console.log(Elements);
   let Htmlelement: string = '<ul>';
   for (let i = 0; i < Elements.length; i++) {
     Htmlelement +=
@@ -67,6 +67,7 @@ function EffectsCreate() {
       effect: BokehPassComp(scene, camera, BokehParams),
       visibility: false,
     },
+    { name: 'Kaleido', effect: KaleidoPassComp, visibility : false},
   ];
 }
 
