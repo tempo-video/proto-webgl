@@ -13,6 +13,7 @@ import {
   WebGLRenderer,
   Camera,
   Clock,
+  Object3D,
 } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
@@ -26,6 +27,8 @@ import {
   shapeInfos,
   element,
   sceneBuffer,
+  Transform,
+  dataInterface,
 } from '../assets/interfaces/Interfaces';
 import { transitionShader } from './transitions/transitions';
 import {
@@ -63,6 +66,8 @@ let allFontsLoaded: Array<LoadedFont> = [];
 let allTextureLoaded: Array<LoadedTexture> = [];
 const Elements: element[] = [];
 const Scenes: sceneBuffer[] = [];
+
+let animations: any[] = [];
 
 ////////////////////////////////////////////////////////
 ////////////////Initialisation de THREE/////////////////
@@ -102,7 +107,7 @@ async function init() {
 
   // -> load all the assets
   await getAllVideos(dataEditor.tracks[0].itemIds, dataEditor.trackItems);
-  await loadAllTextures();
+  await loadAllTextures(dataEditor);
   await FontsLoader();
 
   // -> Add them in threejs
@@ -173,15 +178,92 @@ function Composer() {
 ///////////////////////// Animations ///////////////////////////
 ////////////////////////////////////////////////////////////////
 
+var onlyOnce = true;
+
 function animation() {
   requestAnimationFrame(animation);
   const deltaTime = clock.getElapsedTime();
 
-  Scenes[2].render();
-  Scenes[1].render();
-  Scenes[0].render();
+  if (scene.getObjectByName('Tempo') && onlyOnce) {
+    var obj = scene.getObjectByName('Tempo');
+
+    animations.push(obj);
+
+    onlyOnceF(obj);
+
+    onlyOnce = false;
+  }
+
+  let dt = clock.getDelta();
+  animations.forEach((object) => {
+    object.updateAnimation(deltaTime);
+  });
+
+  //Scenes[2].render();
+  //Scenes[1].render();
+  //Scenes[0].render();
 
   composerAnimation(composer, deltaTime);
+}
+
+function onlyOnceF(obj: any) {
+  /*cadre.onClick = function (intersection) {
+    if (this.animationStatus == 0) {
+      this.animationStatus = 1;
+    } else if (this.animationStatus == 2) {
+      this.animationStatus = 3;
+    }
+  };*/
+
+  console.log('onlyOnceSet');
+
+  obj.animationStatus = 0;
+
+  document.addEventListener('click', () => {
+    console.log('eoh');
+    if (obj.animationStatus == 0) {
+      console.log('obj anim set to 1');
+      obj.animationStatus = 1;
+    } else if (obj.animationStatus == 2) {
+      console.log('obj anim set to 3');
+      obj.animationStatus = 3;
+    }
+  });
+
+  obj.end = 200;
+  obj.start = 0;
+  obj.duration = 1000;
+  obj.updateAnimation = function (dt: any) {
+    let angle = (dt * (this.end - this.start)) / this.duration;
+    switch (this.animationStatus) {
+      case 1:
+        this.position.y -= angle;
+        //this.position.y = easeOutBack(map_range(this.position.y - angle, this.end, this.start, 0, 1));
+        if (this.position.y < this.start) {
+          this.position.y = this.start;
+          this.animationStatus = 2;
+        }
+        break;
+      case 3:
+        this.position.y += angle;
+        if (this.position.y > this.end) {
+          this.position.y = this.end;
+          this.animationStatus = 0;
+        }
+        break;
+    }
+  };
+}
+
+function easeOutBack(x: number): number {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+  }
+
+function map_range(value: any, low1: any, high1: any, low2: any, high2: any) {
+  return low2 + ((high2 - low2) * (value - low1)) / (high1 - low1);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -266,8 +348,8 @@ async function getAllElements() {
     );
 }
 
-async function loadAllTextures() {
-  const textureIds = dataEditor.elementModels
+async function loadAllTextures(data: dataInterface) {
+  const textureIds = data.elementModels
     .filter((element) => element.categoryId === 'brand')
     .map((element) => element.id);
 
