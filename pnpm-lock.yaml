@@ -9,9 +9,11 @@ specifiers:
   '@nrwl/tao': 12.9.0
   '@nrwl/web': ^12.9.0
   '@nrwl/workspace': 12.9.0
+  '@tweenjs/tween.js': ^18.6.4
   '@types/jest': 26.0.24
   '@types/node': 14.14.33
   '@types/three': ^0.132.2
+  '@types/tween.js': ^18.6.1
   '@typescript-eslint/eslint-plugin': ~4.28.3
   '@typescript-eslint/parser': ~4.28.3
   core-js: ^3.6.5
@@ -30,6 +32,7 @@ specifiers:
   typescript: ~4.3.5
 
 dependencies:
+  '@tweenjs/tween.js': 18.6.4
   core-js: 3.18.1
   noisejs: 2.1.0
   regenerator-runtime: 0.13.7
@@ -49,6 +52,7 @@ devDependencies:
   '@types/jest': 26.0.24
   '@types/node': 14.14.33
   '@types/three': 0.132.2
+  '@types/tween.js': 18.6.1
   '@typescript-eslint/eslint-plugin': 4.28.5_aef98d5017e29b9d77e8f1f0bddfcabc
   '@typescript-eslint/parser': 4.28.5_eslint@7.22.0+typescript@4.3.5
   cypress: 8.4.1
@@ -2186,6 +2190,9 @@ packages:
     engines: {node: '>=10.13.0'}
     dev: true
 
+  /@tweenjs/tween.js/18.6.4:
+    resolution: {integrity: sha512-lB9lMjuqjtuJrx7/kOkqQBtllspPIN+96OvTCeJ2j5FEzinoAXTdAMFnDAQT1KVPRlnYfBrqxtqP66vDM40xxQ==}
+
   /@types/babel__core/7.1.16:
     resolution: {integrity: sha512-EAEHtisTMM+KaKwfWdC3oyllIqswlznXCIVCt7/oRNrh+DhgT4UEBNC/jlADNjvw7UnfbcdkGQcPVZ1xYiLcrQ==}
     dependencies:
@@ -2281,10 +2288,6 @@ packages:
     resolution: {integrity: sha512-oJqcTrgPUF29oUP8AsUqbXGJNuPutsetaa9kTQAQce5Lx5dTYWV02ScBiT/k1BX/Z7pKeqedmvp39Wu4zR7N7g==}
     dev: true
 
-  /@types/noisejs/0.0.28:
-    resolution: {integrity: sha1-eXrCWdWSAE+OE1Jsya/q+fH8sm4=}
-    dev: true
-
   /@types/parse-json/4.0.0:
     resolution: {integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==}
     dev: true
@@ -2317,6 +2320,13 @@ packages:
 
   /@types/three/0.132.2:
     resolution: {integrity: sha512-DpaP0sObpHvKX8zdfCqyTK526N8lQ86Qstp6MnQJ3jNYie7Bv9AMRTALuoIH8dgVZ62z9twuNvEarWHXOZwmSw==}
+    dev: true
+
+  /@types/tween.js/18.6.1:
+    resolution: {integrity: sha512-TJsLKUQtHPMvxEzh9Iy1Rb8C+a1q8IRrZsYy21LX4l9mhVtvfkPzQ7p7SA25N2YvCm0dEZ0V0y/5cPOnGI/atw==}
+    deprecated: This is a stub types definition. @tweenjs/tween.js provides its own type definitions, so you do not need this installed.
+    dependencies:
+      '@tweenjs/tween.js': 18.6.4
     dev: true
 
   /@types/webpack-sources/0.1.9:
