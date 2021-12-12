@@ -163,7 +163,7 @@
       {
         "id": "regular",
         "nameId": "regular",
-        "url": "../assets/fonts/Open_Sans.json",
+        "url": "../assets/fonts/Bebas_Neue_Regular.json",
         "style": {
           "fontFamily": "Roboto",
           "fontSize": "14pt",

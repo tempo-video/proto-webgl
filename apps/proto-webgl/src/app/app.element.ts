@@ -19,6 +19,7 @@ import {
   Vector,
   PlaneHelper,
   Plane,
+  Event,
 } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
@@ -34,7 +35,7 @@ import {
   sceneBuffer,
   Transform,
   dataInterface,
-} from '../assets/interfaces/Interfaces';
+} from '../assets/Interfaces/Interfaces';
 import { transitionShader } from './transitions/transitions';
 import {
   ChooseTransition,
@@ -42,7 +43,7 @@ import {
   ChooseEffects,
   EffectsCreate,
   composerAnimation,
-} from '../assets/gui/gui';
+} from '../assets/GUI/gui';
 import { SceneBuffer } from './scenes/scenes';
 
 import { loadFonts } from './fonts/loadFonts';
@@ -74,7 +75,7 @@ let allTextureLoaded: Array<LoadedTexture> = [];
 const Elements: element[] = [];
 const Scenes: sceneBuffer[] = [];
 
-let animations: any[] = [];
+const animations: any[] = [];
 
 import * as TWEEN from '@tweenjs/tween.js';
 import { posix } from 'path';
@@ -124,7 +125,7 @@ async function init() {
   // -> Add them in threejs
   addAllVideosThree();
   getAllElements();
-  addTextThree('Bienvenue\nsur le site\nTEMPO', 'regular');
+  addTextThree('Bienvenue\nsur le site\nTEMPO\nHello', 'regular');
   /*addSubtitles(
     'In literary theory, a text is any object that can be "read", whether this object is a work of literature, a street sign, an arrangement of buildings on a city block, or styles of clothing. It is a coherent set of signs that transmits some kind of informative message.',
     allFontsLoaded[1].font,
@@ -189,14 +190,16 @@ function Composer() {
 ///////////////////////// Animations ///////////////////////////
 ////////////////////////////////////////////////////////////////
 
-var onlyOnce = true;
+let onlyOnce = true;
+
+let obj: { objects: Object3D<Event>; };
 
 function animation(time: any) {
   requestAnimationFrame(animation);
   const deltaTime = clock.getElapsedTime();
 
   if (scene.children[1] && onlyOnce) {
-    var obj = {
+    obj = {
       objects: scene.children[1],
     };
 
@@ -209,7 +212,7 @@ function animation(time: any) {
 
   TWEEN.update(deltaTime);
 
-  let dt = clock.getDelta();
+  const dt = clock.getDelta();
   animations.forEach((object) => {
     object.updateAnimation(deltaTime, dt);
   });
@@ -236,26 +239,16 @@ function onlyOnceF(obj: any) {
     onlyOnce: true,
   };
 
-  console.log('obj : ' + obj);
+  obj.objects.position.set(0, 0, 0);
 
-  document.addEventListener('click', () => {
-    console.log('eoh');
-    if (obj.options.animationStatus == 0) {
-      console.log('obj anim set to 1');
-      obj.options.animationStatus = 3;
-    }
-  });
-
-  obj.objects.position.set(0,0,0);
-
-  
   new Box3()
     .setFromObject(obj.objects)
     .getCenter(obj.objects.position)
     .multiplyScalar(-1);
 
-  /*obj.objects.position.set(0,0,0);
-  obj.objects.visibility = true;
+  /*obj.objects.position.set(0,0,:0);
+  obj.objects.visibility = true;*/
+
   /*var mesh = obj.objects;
   var center = new Vector3();
   mesh.geometry.computeBoundingBox();
@@ -263,11 +256,11 @@ function onlyOnceF(obj: any) {
   mesh.geometry.center();
   mesh.position.copy(center);*/
 
-  obj.updateAnimation = function (dt: any, d: any) {
+  obj.updateAnimation = function () {
     switch (this.options.animationStatus) {
       case 2:
         if (this.options.onlyOnce) {
-          let position: { x: number; y: number; z: number } = {
+          const position: { x: number; y: number; z: number } = {
             x: 0,
             y: 0,
             z: 0,
@@ -275,6 +268,10 @@ function onlyOnceF(obj: any) {
           new TWEEN.Tween(position)
             .to({ x: 0, y: -1200, z: 0 }, 1500)
             .easing(TWEEN.Easing.Back.InOut)
+            .onStart(() => {
+              this.objects.scale.set(1, 1, 1);
+              this.objects.position.set(0, 0, 0);
+            })
             .onUpdate(() => {
               this.objects.position.y = position.y;
             })
@@ -288,11 +285,15 @@ function onlyOnceF(obj: any) {
         break;
       case 3:
         if (this.options.onlyOnce) {
-          let scale: { x: number; y: number; z: number } = { x: 1, y: 1, z: 1 };
+          const scale: { x: number; y: number; z: number } = { x: 1, y: 1, z: 1 };
           console.log('scale : ' + scale);
           new TWEEN.Tween(scale)
             .to({ x: 1.8, y: 1.8, z: 1.8 }, 600)
             .easing(TWEEN.Easing.Elastic.Out)
+            .onStart(() => {
+              this.objects.position.set(0, 0, 0);
+              this.objects.visible = true;
+            })
             .onUpdate(() => {
               console.log('update scale y: ' + scale.y);
               this.objects.scale.set(scale.x, scale.y, scale.z);
@@ -309,13 +310,20 @@ function onlyOnceF(obj: any) {
         console.log('essai lancé case 4');
         if (this.options.onlyOnce) {
           console.log('case 4 start');
-          let opacity: { o: number } = { o: 1 };
+          const opacity: { o: number } = { o: 1 };
           new TWEEN.Tween(opacity)
             .to({ o: 0 }, 1000)
             .easing(TWEEN.Easing.Quartic.In)
+            .onStart(() => {
+              this.objects.children[1].children.forEach((element: { material: { transparent: boolean; }; }) => {
+                element.material.transparent = true;
+              });
+            })
             .onUpdate(() => {
-              console.log('update opacity, o : ' + opacity.o);
-              this.objects[1].material.opacity = opacity.o;
+              console.log('update opacity, o : ' + opacity.o, this.objects.children);
+              this.objects.children[1].children.forEach((element: { material: { opacity: number; }; }) => {
+                element.material.opacity = opacity.o;
+              });
             })
             .onComplete(() => {
               this.options.onlyOnce = true;
@@ -327,12 +335,12 @@ function onlyOnceF(obj: any) {
         break;
       case 5:
         if (this.options.onlyOnce) {
-          let start = {
+          const start = {
             positions: { x: 0, y: 400, z: 0 },
             opacity: 0,
             scale: { x: 1, y: 1, z: 1 },
           };
-          let end = {
+          const end = {
             positions: { x: 0, y: -180, z: 0 },
             opacity: 1,
             scale: { x: 1.2, y: 1.2, z: 1.2 },
@@ -344,24 +352,25 @@ function onlyOnceF(obj: any) {
               .easing(TWEEN.Easing.Cubic.InOut)
               .onStart(() => {
                 this.objects.visible = true;
-                let box = new Box3().setFromObject(this.objects.children[i]);
-                let height = box.max.y - box.min.y;
+                const box = new Box3().setFromObject(this.objects.children[i]);
+                const height = box.max.y - box.min.y;
                 console.log(
                   'top plane : ' +
-                    (-180 + height * i) +
-                    'bottome plane : ' +
-                    (-180 + height * (i + 1))
+                  (-180 + height * i) +
+                  'bottome plane : ' +
+                  (-180 + height * (i + 1))
                 );
 
-                this.objects.children[i].children.forEach((element: any) => {
+                this.objects.children[i].children.forEach((element: { material: { clippingPlanes: Plane[]; }; }) => {
                   element.material.clippingPlanes = [
-                    new Plane(new Vector3(0, 1, 0), 200 + height / 2 - 200 * i),
+                    new Plane(new Vector3(0, 1, 0), 250 + height / 2 - 200 * i),
                     new Plane(
                       new Vector3(0, -1, 0),
-                      -200 - height / 2 + 200 * (i + 1)
+                      -250 - height / 2 + 200 * (i + 1)
                     ),
                   ];
                 });
+                this.objects.position.set(0, 0, 0);
               })
               .onUpdate(() => {
                 this.objects.children[i].position.set(
@@ -422,7 +431,6 @@ function onlyOnceF(obj: any) {
                         );
                       })
                       .onComplete(() => {
-                        this.objects.visible = false;
                         this.objects.children[i].children.forEach(
                           (elements: any) => {
                             elements.material.clippingPlanes = [];
@@ -430,6 +438,8 @@ function onlyOnceF(obj: any) {
                         );
                         this.options.animationStatus = 0;
                         this.options.onlyOnce = true;
+                        this.objects.children[i].position.set(0, i * 200, 0);
+                        this.objects.children[i].scale.set(1, 1, 1);
                       })
                       .start();
                   })
@@ -470,32 +480,37 @@ function onlyOnceF(obj: any) {
         break;
       case 6:
         if (this.options.onlyOnce) {
-          let texte = this.objects[0];
-          texte.material.opacity = 1;
+          this.objects.children.forEach((element: { visible: boolean; }) => {
+            element.visible = false;
+          });
+          const texte = this.objects.children[0];
+          texte.visible = true;
           texte.position.set(0, 0, 0);
           texte.scale.set(1, 1, 1);
 
-          let number = 7;
-          let height = 1080;
-          let taillerepet = height / number + 30;
+          const number = 9;
+          const height = 1080;
+          const taillerepet = height / number + 30;
 
-          let posClones: { x: number; y: number; z: number }[] = [];
+          const posClones: { x: number; y: number; z: number }[] = [];
 
           for (
             let i = -Math.round(number / 2);
             i < Math.round(number / 2);
             i++
           ) {
-            let pos = { x: 0, y: texte.position.y + taillerepet * i, z: 0 };
+            const pos = { x: 0, y: texte.position.y + taillerepet * i, z: 0 };
             i !== 0 ? posClones.push(pos) : console.log('0');
           }
 
-          let scale = { scale: 1.3 };
+          const scale = { scale: 1.3 };
 
-          let clones: any[] = [];
+          this.objects.position.set(0, 0, 0);
+
+          const clones: any[] = [];
 
           for (let i = 0; i < posClones.length; i++) {
-            let clone = texte.clone(false);
+            const clone = texte.clone(true);
             new TWEEN.Tween(scale)
               .to({ scale: 1 }, 50)
               .delay(50 * i)
@@ -521,6 +536,9 @@ function onlyOnceF(obj: any) {
                     this.options.animationStatus = 0;
                     this.options.onlyOnce = true;
                     scene.remove(clone);
+                    this.objects.children.forEach((element: { visible: boolean; }) => {
+                      element.visible = true;
+                    })
                   })
               )
               .start();
@@ -530,12 +548,75 @@ function onlyOnceF(obj: any) {
         break;
       case 7:
         if (this.options.onlyOnce) {
+          const opacity = { opacity: 0 };
+          for (let i = 0; i < this.objects.children.length ; i++) {
+            let j = 0;
+            this.objects.children[i].children.forEach((element: any) => {
+              element.material.transparent = true;
+              element.material.opacity = 0;
+              new TWEEN.Tween({ opacity: 0 })
+                .to({ opacity: 1 }, 200)
+                .delay(i * 350 + j * 50)
+                .onStart(() => {
+                  console.log(this.objects.children[i].children[j]);
+                })
+                .onUpdate(() => {
+                  element.material.opacity = opacity.opacity;
+                })
+                .onComplete(() => {
+                  element.material.opacity = 1;
+                  this.options.animationStatus = 0;
+                  this.options.onlyOnce = true;
+                })
+                .start();
+              j += 1;
+            });
+          }
           this.options.onlyOnce = false;
         }
         break;
     }
   };
   console.log(obj);
+
+  const html = '<div><div id="translate">Translate</div><div id="scale">Scale</div><div id="opacity">opacity</div><div id="multiply">multiply</div><div id ="apparition1">apparition1</div><div id ="apparition2">apparition2</div></div>'
+  document.getElementById('gui')!.innerHTML = html;
+
+  document.getElementById('gui')!.addEventListener('click', (event) => {
+    console.log((<HTMLDivElement>event.target).id);
+    switch ((<HTMLDivElement>event.target).id) {
+      case 'translate':
+        if (obj.options.animationStatus === 0) {
+          obj.options.animationStatus = 2;
+        }
+        break;
+      case 'scale':
+        if (obj.options.animationStatus === 0) {
+          obj.options.animationStatus = 3;
+        }
+        break;
+      case 'opacity':
+        if (obj.options.animationStatus === 0) {
+          obj.options.animationStatus = 4;
+        }
+        break;
+      case 'multiply':
+        if (obj.options.animationStatus === 0) {
+          obj.options.animationStatus = 6;
+        }
+        break;
+      case 'apparition1':
+        if (obj.options.animationStatus === 0) {
+          obj.options.animationStatus = 5;
+        }
+        break;
+      case 'apparition2':
+        if (obj.options.animationStatus === 0) {
+          obj.options.animationStatus = 7;
+        }
+        break;
+    }
+  })
 }
 
 ////////////////////////////////////////////////////////////////
@@ -564,7 +645,7 @@ function TransitionGoF(VideoId: string, index: string) {
   }
 }
 
-let TransitionSpeed = 1;
+const TransitionSpeed = 1;
 
 function TransitionAnimation() {
   const deltaTime: number = clockTransition.getElapsedTime();
@@ -685,7 +766,7 @@ async function FontsLoader() {
 }
 
 function addTextThree(textString: string, type: string) {
-  let texts = TextLoader(textString, type, allFontsLoaded);
+  const texts = TextLoader(textString, type, allFontsLoaded);
   let ligneEspaceIndex = 0;
   texts.children.forEach((element) => {
     let lastMaxX = 0;
@@ -695,14 +776,10 @@ function addTextThree(textString: string, type: string) {
         lastMaxX = elem.position.x + 20;
       } else {
         console.log(elem);
-        let box = new Box3().setFromObject(elem);
+        const box = new Box3().setFromObject(elem);
         elem.position.set(lastMaxX + 20, 0, 0);
         lastMaxX = elem.position.x + (box.max.x - box.min.x);
       }
-      new Box3()
-          .setFromObject(elem)
-          .getCenter(elem.position)
-          .multiplyScalar(1);
     });
     element.position.set(0, ligneEspaceIndex * 150, 0);
     ligneEspaceIndex++;
