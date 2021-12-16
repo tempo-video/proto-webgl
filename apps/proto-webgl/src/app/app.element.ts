@@ -24,7 +24,7 @@ import {
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import * as data from '../assets/editor-state.json';
-import { fromEvent, firstValueFrom, of } from 'rxjs';
+import { fromEvent, firstValueFrom, of, from, filter, Observable, elementAt } from 'rxjs';
 import { map } from 'rxjs';
 import addSubtitles from './subtitles/addSubtitles';
 import {
@@ -35,7 +35,7 @@ import {
   sceneBuffer,
   Transform,
   dataInterface,
-} from '../assets/Interfaces/Interfaces';
+} from '../assets/interfaces/Interfaces';
 import { transitionShader } from './transitions/transitions';
 import {
   ChooseTransition,
@@ -43,7 +43,7 @@ import {
   ChooseEffects,
   EffectsCreate,
   composerAnimation,
-} from '../assets/GUI/gui';
+} from '../assets/gui/gui';
 import { SceneBuffer } from './scenes/scenes';
 
 import { loadFonts } from './fonts/loadFonts';
@@ -57,6 +57,10 @@ import { getAllVideos } from './videos/loadAllVideos';
 import { playVideo } from './videos/controls';
 
 import { localPlanes } from './fonts/addTextThree';
+
+import * as animejs from 'animejs';
+
+import anime from 'animejs';
 
 export { scene, camera };
 
@@ -192,32 +196,25 @@ function Composer() {
 
 let onlyOnce = true;
 
-let obj: { objects: Object3D<Event>; };
+let obj: { objects: Object3D<Event> };
 
 function animation(time: any) {
   requestAnimationFrame(animation);
+
   const deltaTime = clock.getElapsedTime();
+  const Dt = clock.getDelta();
+
+  TWEEN.update(time);
 
   if (scene.children[1] && onlyOnce) {
     obj = {
       objects: scene.children[1],
     };
 
-    animations.push(obj);
-
     onlyOnceF(obj);
 
     onlyOnce = false;
   }
-
-  TWEEN.update(deltaTime);
-
-  const dt = clock.getDelta();
-  animations.forEach((object) => {
-    object.updateAnimation(deltaTime, dt);
-  });
-
-  TWEEN.update(time);
 
   //Scenes[2].render();
   //Scenes[1].render();
@@ -226,8 +223,466 @@ function animation(time: any) {
   composerAnimation(composer, deltaTime);
 }
 
+import * as test from '../assets/test.json';
+
+interface animation {
+  type: any;
+  options: string[];
+  id: number;
+  start: any;
+  end: any;
+  duration: number;
+  easing: string;
+  delay: number;
+  chain: any[];
+  target: string;
+  per: number;
+}
+
+interface groupAnimation {
+  objet: string;
+  name: string;
+  animStart: number[];
+  index: number;
+  animations: animation[] | undefined;
+}
+
+function createAnimation(element: groupAnimation) {
+  const object = scene.getObjectByName(element.objet);
+
+  animCreate(
+    element,
+    findAnimations(element.animations!, element.animStart),
+    object!
+  );
+}
+
+function findAnimations(animationList: animation[], listId: number[]) {
+  const animsToStart: animation[] = [];
+  const anims: Observable<unknown> = from(animationList);
+
+  const animations = anims.pipe(filter((num: any) => listId.includes(num.id)));
+
+  animations.subscribe((element) => animsToStart.push(element));
+
+  return animsToStart;
+}
+
+function animCreate(
+  groupAnimation: groupAnimation,
+  elements: animation[],
+  object: Object3D,
+  parentTween?: TWEEN.Tween<any>
+) {
+  const groupAnimToChain: TWEEN.Group = new TWEEN.Group();
+  elements.forEach((element: animation) => {
+    let tween: any = switchType(element, object as Mesh);
+    console.log('tween', tween);
+    tween.play();
+    /*if (tween!.getAll) {
+      let tweens = tween.getAll();
+      tweens.forEach((elementTween: TWEEN.Tween<any>) => {
+        if (element.chain) {
+          let animsToChain = findAnimations(
+            groupAnimation.animations!,
+            element.chain
+          );
+          animCreate(groupAnimation, animsToChain, object, elementTween);
+        }
+        if (parentTween) {
+          groupAnimToChain.add(elementTween);
+        } else {
+          elementTween.start();
+        }
+      });
+    } else {
+      if (element.chain) {
+        animCreate(
+          groupAnimation,
+          findAnimations(groupAnimation.animations!, element.chain),
+          object,
+          tween
+        );
+      }
+      if (parentTween) {
+        groupAnimToChain.add(tween);
+      } else {
+        tween?.start();
+      }
+    }*/
+  });
+  let animstochain = groupAnimToChain.getAll();
+  if (parentTween !== undefined && animstochain[0]) {
+    console.log(parentTween, 'tween to chain first : ', animstochain[0]);
+    /*parentTween.chain(animstochain[0]);
+
+    animstochain[0].onStart(() => {
+      for (let i = 1; i < animstochain.length; i++) {
+        animstochain[i].start();
+      }
+    });*/
+    ////////// a changer trouvez autre choses c moches la ///////////////
+
+    switch (animstochain.length) {
+      case 1:
+        parentTween.chain(animstochain[0]);
+        break;
+      case 2:
+        parentTween.chain(animstochain[0], animstochain[1]);
+        break;
+      case 3:
+        parentTween.chain(animstochain[0], animstochain[1], animstochain[2]);
+        break;
+      case 4:
+        parentTween.chain(
+          animstochain[0],
+          animstochain[1],
+          animstochain[2],
+          animstochain[3]
+        );
+        break;
+      case 5:
+        parentTween.chain(
+          animstochain[0],
+          animstochain[1],
+          animstochain[2],
+          animstochain[3],
+          animstochain[4]
+        );
+        break;
+      case 6:
+        parentTween.chain(
+          animstochain[0],
+          animstochain[1],
+          animstochain[2],
+          animstochain[3],
+          animstochain[4],
+          animstochain[5]
+        );
+        break;
+    }
+  }
+}
+
+function switchType(element: animation, object: Mesh) {
+  switch (element.type) {
+    case 'anime':
+      var coords = [
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 0, z: 0 },
+      ];
+
+      return anime({
+        targets: coords,
+        x: element.end.x,
+        y: element.end.y,
+        z: element.end.z,
+        round: 1,
+        easing: element.easing,
+        duration: element.duration,
+        autoplay : false,
+        update: function () {
+          object.children.forEach((element, index) => {
+            element.position.set(coords[index].x, coords[index].y + 200 * index, coords[index].z);
+          })
+        },
+        delay: anime.stagger(200),
+      });
+    case 'translation':
+      if (element.target === 'line') {
+        let tweenGroup: TWEEN.Group = new TWEEN.Group();
+        object.children.forEach((elem, index) => {
+          const box = new Box3().setFromObject(elem);
+          const height = box.max.y - box.min.y;
+          let positionTranslationLine = JSON.parse(
+            JSON.stringify(element.start)
+          );
+          let newTween = new TWEEN.Tween(positionTranslationLine)
+            .to(element.end, element.duration)
+            .easing(TWEEN.Easing.Quartic.InOut)
+            .delay(element.delay * index)
+            .onStart(() => {
+              object.position.set(
+                element.end.translate.x,
+                element.end.translate.y,
+                element.end.translate.z
+              );
+              elem.position.set(
+                element.start.translate.x,
+                element.start.translate.y + (height + 50) * index,
+                element.start.translate.z
+              );
+              if (element.options.includes('clipping')) {
+                object.visible = true;
+                let i = 0;
+                elem.children.forEach((elem: any) => {
+                  elem.material.clippingPlanes = [
+                    new Plane(
+                      new Vector3(0, 1, 0),
+                      -(
+                        (element.options.includes('clipping-out')
+                          ? element.start
+                          : element.end
+                        ).translate.y -
+                        height +
+                        (height + 50) * i
+                      )
+                    ),
+                    new Plane(
+                      new Vector3(0, -1, 0),
+                      (element.options.includes('clipping-out')
+                        ? element.start
+                        : element.end
+                      ).translate.y +
+                        (height + 50) * i
+                    ),
+                  ];
+                });
+                i++;
+              }
+            })
+            .onUpdate(() => {
+              elem.position.set(
+                positionTranslationLine.translate.x,
+                positionTranslationLine.translate.y + (height + 50) * index,
+                positionTranslationLine.translate.z
+              );
+            })
+            .onComplete(() => {
+              if (element.options.includes('clipping')) {
+                object.children.forEach((lines) => {
+                  lines.children.forEach((elements: any) => {
+                    elements.material.clippingPlanes = [];
+                  });
+                });
+              }
+            });
+          tweenGroup.add(newTween);
+        });
+        console.log('tweengroup', tweenGroup);
+        return tweenGroup;
+      } else {
+        let positionTranslation = JSON.parse(JSON.stringify(element.start));
+        let tweenTranslation = new TWEEN.Tween(positionTranslation)
+          .to(element.end, element.duration)
+          .easing(TWEEN.Easing.Quartic.InOut)
+          .delay(element.delay)
+          .onStart(() => {
+            object.position.set(
+              element.start.translate.x,
+              element.start.translate.y,
+              element.start.translate.z
+            );
+            if (element.options.includes('clipping')) {
+              object.visible = true;
+              let i = 0;
+              object.children.forEach((line: any) => {
+                const box = new Box3().setFromObject(line);
+                const height = box.max.y - box.min.y;
+                line.children.forEach(
+                  (elem: { material: { clippingPlanes: Plane[] } }) => {
+                    elem.material.clippingPlanes = [
+                      new Plane(
+                        new Vector3(0, 1, 0),
+                        -(
+                          (element.options.includes('clipping-out')
+                            ? element.start
+                            : element.end
+                          ).translate.y -
+                          height +
+                          (height + 50) * i
+                        )
+                      ),
+                      new Plane(
+                        new Vector3(0, -1, 0),
+                        (element.options.includes('clipping-out')
+                          ? element.start
+                          : element.end
+                        ).translate.y +
+                          (height + 50) * i
+                      ),
+                    ];
+                  }
+                );
+                i++;
+              });
+            }
+          })
+          .onUpdate(() => {
+            object.position.set(
+              positionTranslation.translate.x,
+              positionTranslation.translate.y,
+              positionTranslation.translate.z
+            );
+          })
+          .onComplete(() => {
+            if (element.options.includes('clipping')) {
+              object.children.forEach((lines) => {
+                lines.children.forEach((elements: any) => {
+                  elements.material.clippingPlanes = [];
+                });
+              });
+            }
+          });
+        return tweenTranslation;
+      }
+    case 'scale':
+      let positionScale = JSON.parse(JSON.stringify(element.start));
+      let tweenScale = new TWEEN.Tween(positionScale)
+        .to(element.end, element.duration)
+        .easing(TWEEN.Easing.Back.InOut)
+        .delay(element.delay)
+        .onStart(() => {
+          object.scale.set(
+            element.start.scale.x,
+            element.start.scale.y,
+            element.start.scale.z
+          );
+          //object.position.set(0, 0, 0);
+        })
+        .onUpdate(() => {
+          console.log(positionScale.scale.y);
+          object.scale.set(
+            positionScale.scale.x,
+            positionScale.scale.y,
+            positionScale.scale.z
+          );
+        })
+        .onComplete(() => {
+          //object.scale.set(1, 1, 1);
+        });
+      return tweenScale;
+    case 'duplicate':
+      object.children.forEach((element: { visible: boolean }) => {
+        element.visible = false;
+      });
+      const texte = object.children[0 /* a changer avec target*/];
+      console.log(texte);
+      texte.visible = true;
+
+      const number = 9;
+      const height = 1080;
+      const taillerepet = height / number + 30;
+
+      const posClones: { x: number; y: number; z: number }[] = [];
+
+      for (let i = -Math.round(number / 2); i < Math.round(number / 2); i++) {
+        const pos = {
+          x: texte.position.x,
+          y: texte.position.y + taillerepet * i,
+          z: 0,
+        };
+        i !== 0 ? posClones.push(pos) : null;
+      }
+
+      object.position.set(0, 0, 0);
+
+      const clones: any[] = [];
+
+      let tweenDuplicate = new TWEEN.Group();
+      let startDuplicate = JSON.parse(JSON.stringify(element.start));
+      for (let i = 0; i < posClones.length; i++) {
+        const clone = texte.clone(true);
+        tweenDuplicate.add(
+          new TWEEN.Tween(startDuplicate)
+            .to(element.end, element.duration)
+            .easing(TWEEN.Easing.Back.InOut)
+            .delay(element.delay * i)
+            .onStart(() => {
+              clone.position.set(
+                posClones[i].x,
+                posClones[i].y,
+                posClones[i].z
+              );
+              clone.scale.set(
+                startDuplicate.scale.x,
+                startDuplicate.scale.y,
+                startDuplicate.scale.z
+              );
+              clones.push(clone);
+              scene.add(clone);
+            })
+            .onUpdate(() => {
+              clone.scale.set(
+                startDuplicate.scale.x,
+                startDuplicate.scale.y,
+                startDuplicate.scale.z
+              );
+            })
+            .onComplete(() => {
+              console.log(element.start, element.end);
+              new TWEEN.Tween({})
+                .to({}, 100)
+                .delay(800 - 25 * i)
+                .onComplete(() => {
+                  scene.remove(clone);
+                  object.children.forEach((element: { visible: boolean }) => {
+                    element.visible = true;
+                  });
+                })
+                .start();
+            })
+        );
+      }
+      console.log(tweenDuplicate.getAll());
+      return tweenDuplicate;
+    case 'opacity':
+      let positionOpacity = JSON.parse(JSON.stringify(element.start));
+      let objet: Mesh[] = [object as Mesh];
+      let objets: any[] = [];
+      while (!objet[0].material) {
+        objet.forEach((element) => {
+          element.children?.forEach((element) => {
+            objets.push(element);
+          });
+        });
+        objet = [];
+        objet = objets;
+        objets = [];
+      }
+      if (element.options.includes('visible-in')) {
+        objet.forEach((objet: any) => {
+          objet.material.opacity = element.start.opacity;
+          objet.material.transparent = true;
+        });
+      }
+      let tweenOpacity = new TWEEN.Group();
+      objet.forEach((objet: any, index) => {
+        tweenOpacity.add(
+          new TWEEN.Tween(positionOpacity)
+            .to(element.end, element.duration)
+            .easing(TWEEN.Easing.Quartic.InOut)
+            .delay(element.delay * index)
+            .onUpdate(() => {
+              objet.material.opacity = positionOpacity.opacity;
+            })
+            .onComplete(() => {
+              //objet.material.opacity.set(1, 1, 1);
+              console.log(element.start, element.end);
+            })
+        );
+      });
+      return tweenOpacity;
+  }
+}
+
 function onlyOnceF(obj: any) {
-  console.log('onlyOnceSet');
+  let div = document.createElement('div');
+
+  let ul = document.createElement('ul');
+  test.forEach((element) => {
+    let li = document.createElement('li');
+    li.addEventListener('click', () => {
+      createAnimation(element);
+    });
+    li.innerHTML = element.name;
+    ul.append(li);
+  });
+  div.append(ul);
+
+  document.getElementById('gui')?.appendChild(div);
 
   obj.options = {
     animationStatus: 0,
@@ -238,385 +693,6 @@ function onlyOnceF(obj: any) {
     oldAngle: 0,
     onlyOnce: true,
   };
-
-  obj.objects.position.set(0, 0, 0);
-
-  new Box3()
-    .setFromObject(obj.objects)
-    .getCenter(obj.objects.position)
-    .multiplyScalar(-1);
-
-  /*obj.objects.position.set(0,0,:0);
-  obj.objects.visibility = true;*/
-
-  /*var mesh = obj.objects;
-  var center = new Vector3();
-  mesh.geometry.computeBoundingBox();
-  mesh.geometry.boundingBox.getCenter(center);
-  mesh.geometry.center();
-  mesh.position.copy(center);*/
-
-  obj.updateAnimation = function () {
-    switch (this.options.animationStatus) {
-      case 2:
-        if (this.options.onlyOnce) {
-          const position: { x: number; y: number; z: number } = {
-            x: 0,
-            y: 0,
-            z: 0,
-          };
-          new TWEEN.Tween(position)
-            .to({ x: 0, y: -1200, z: 0 }, 1500)
-            .easing(TWEEN.Easing.Back.InOut)
-            .onStart(() => {
-              this.objects.scale.set(1, 1, 1);
-              this.objects.position.set(0, 0, 0);
-            })
-            .onUpdate(() => {
-              this.objects.position.y = position.y;
-            })
-            .onComplete(() => {
-              this.options.onlyOnce = true;
-              this.options.animationStatus = 0;
-            })
-            .start();
-          this.options.onlyOnce = false;
-        }
-        break;
-      case 3:
-        if (this.options.onlyOnce) {
-          const scale: { x: number; y: number; z: number } = { x: 1, y: 1, z: 1 };
-          console.log('scale : ' + scale);
-          new TWEEN.Tween(scale)
-            .to({ x: 1.8, y: 1.8, z: 1.8 }, 600)
-            .easing(TWEEN.Easing.Elastic.Out)
-            .onStart(() => {
-              this.objects.position.set(0, 0, 0);
-              this.objects.visible = true;
-            })
-            .onUpdate(() => {
-              console.log('update scale y: ' + scale.y);
-              this.objects.scale.set(scale.x, scale.y, scale.z);
-            })
-            .onComplete(() => {
-              this.options.animationStatus = 0;
-              this.options.onlyOnce = true;
-            })
-            .start();
-          this.options.onlyOnce = false;
-        }
-        break;
-      case 4:
-        console.log('essai lancé case 4');
-        if (this.options.onlyOnce) {
-          console.log('case 4 start');
-          const opacity: { o: number } = { o: 1 };
-          new TWEEN.Tween(opacity)
-            .to({ o: 0 }, 1000)
-            .easing(TWEEN.Easing.Quartic.In)
-            .onStart(() => {
-              this.objects.children[1].children.forEach((element: { material: { transparent: boolean; }; }) => {
-                element.material.transparent = true;
-              });
-            })
-            .onUpdate(() => {
-              console.log('update opacity, o : ' + opacity.o, this.objects.children);
-              this.objects.children[1].children.forEach((element: { material: { opacity: number; }; }) => {
-                element.material.opacity = opacity.o;
-              });
-            })
-            .onComplete(() => {
-              this.options.onlyOnce = true;
-              this.options.animationStatus = 0;
-            })
-            .start();
-          this.options.onlyOnce = false;
-        }
-        break;
-      case 5:
-        if (this.options.onlyOnce) {
-          const start = {
-            positions: { x: 0, y: 400, z: 0 },
-            opacity: 0,
-            scale: { x: 1, y: 1, z: 1 },
-          };
-          const end = {
-            positions: { x: 0, y: -180, z: 0 },
-            opacity: 1,
-            scale: { x: 1.2, y: 1.2, z: 1.2 },
-          };
-          for (let i = 0; i < this.objects.children.length; i++) {
-            new TWEEN.Tween(start)
-              .to(end, 600)
-              .delay(50 * i)
-              .easing(TWEEN.Easing.Cubic.InOut)
-              .onStart(() => {
-                this.objects.visible = true;
-                const box = new Box3().setFromObject(this.objects.children[i]);
-                const height = box.max.y - box.min.y;
-                console.log(
-                  'top plane : ' +
-                  (-180 + height * i) +
-                  'bottome plane : ' +
-                  (-180 + height * (i + 1))
-                );
-
-                this.objects.children[i].children.forEach((element: { material: { clippingPlanes: Plane[]; }; }) => {
-                  element.material.clippingPlanes = [
-                    new Plane(new Vector3(0, 1, 0), 250 + height / 2 - 200 * i),
-                    new Plane(
-                      new Vector3(0, -1, 0),
-                      -250 - height / 2 + 200 * (i + 1)
-                    ),
-                  ];
-                });
-                this.objects.position.set(0, 0, 0);
-              })
-              .onUpdate(() => {
-                this.objects.children[i].position.set(
-                  start.positions.x,
-                  start.positions.y + i * 200,
-                  start.positions.z
-                );
-              })
-              .start()
-              .chain(
-                new TWEEN.Tween(end)
-                  .to(
-                    {
-                      positions: { x: -300, y: -180, z: 0 },
-                      opacity: 1,
-                      scale: { x: 1.8, y: 1.8, z: 1.8 },
-                    },
-                    500
-                  )
-                  .easing(TWEEN.Easing.Cubic.InOut)
-                  .onStart(() => {
-                    /*new TWEEN.Tween(end)
-                      .to(
-                        {
-                          positions: { x: 0, y: -150, z: 0 },
-                          opacity: 1,
-                          scale: { x: 1.3, y: 1.3, z: 1.3 },
-                        },
-                        500
-                      )
-                      .easing(TWEEN.Easing.Cubic.InOut)
-                      .onUpdate(() => {
-                        if (i == 2) {
-                          this.objects[i].position.set(
-                            end.positions.x,
-                            end.positions.y + (i * 200),
-                            end.positions.z
-                          );
-                        }
-                      })
-                      .start();*/
-                    new TWEEN.Tween(end)
-                      .to(
-                        {
-                          positions: { x: 0, y: -1250, z: 0 },
-                          opacity: 1,
-                          scale: { x: 1.3, y: 1.3, z: 1.3 },
-                        },
-                        700
-                      )
-                      .delay(1000)
-                      .easing(TWEEN.Easing.Cubic.InOut)
-                      .onUpdate(() => {
-                        this.objects.children[i].position.set(
-                          end.positions.x,
-                          end.positions.y + i * 200,
-                          end.positions.z
-                        );
-                      })
-                      .onComplete(() => {
-                        this.objects.children[i].children.forEach(
-                          (elements: any) => {
-                            elements.material.clippingPlanes = [];
-                          }
-                        );
-                        this.options.animationStatus = 0;
-                        this.options.onlyOnce = true;
-                        this.objects.children[i].position.set(0, i * 200, 0);
-                        this.objects.children[i].scale.set(1, 1, 1);
-                      })
-                      .start();
-                  })
-                  .onUpdate(() => {
-                    if (i == 2) {
-                      this.objects.children[i].scale.set(
-                        end.scale.x,
-                        /*end.scale.y*/ 1.3,
-                        /*end.scale.z*/ 1.3
-                      );
-                    }
-                  })
-              );
-
-            new TWEEN.Tween(start)
-              .to(end, 600)
-              .delay(50 * i)
-              .easing(TWEEN.Easing.Quintic.In)
-              .onUpdate(() => {
-                //this.objects[i].material.opacity = start.opacity;
-              })
-              .start();
-            new TWEEN.Tween(start)
-              .to(end, 600)
-              .delay(50 * i)
-              .easing(TWEEN.Easing.Quintic.Out)
-              .onUpdate(() => {
-                this.objects.children[i].scale.set(
-                  start.scale.x,
-                  start.scale.y,
-                  start.scale.z
-                );
-              })
-              .start();
-          }
-          this.options.onlyOnce = false;
-        }
-        break;
-      case 6:
-        if (this.options.onlyOnce) {
-          this.objects.children.forEach((element: { visible: boolean; }) => {
-            element.visible = false;
-          });
-          const texte = this.objects.children[0];
-          texte.visible = true;
-          texte.position.set(0, 0, 0);
-          texte.scale.set(1, 1, 1);
-
-          const number = 9;
-          const height = 1080;
-          const taillerepet = height / number + 30;
-
-          const posClones: { x: number; y: number; z: number }[] = [];
-
-          for (
-            let i = -Math.round(number / 2);
-            i < Math.round(number / 2);
-            i++
-          ) {
-            const pos = { x: 0, y: texte.position.y + taillerepet * i, z: 0 };
-            i !== 0 ? posClones.push(pos) : console.log('0');
-          }
-
-          const scale = { scale: 1.3 };
-
-          this.objects.position.set(0, 0, 0);
-
-          const clones: any[] = [];
-
-          for (let i = 0; i < posClones.length; i++) {
-            const clone = texte.clone(true);
-            new TWEEN.Tween(scale)
-              .to({ scale: 1 }, 50)
-              .delay(50 * i)
-              .easing(TWEEN.Easing.Exponential.Out)
-              .onStart(() => {
-                clone.position.set(
-                  posClones[i].x,
-                  posClones[i].y,
-                  posClones[i].z
-                );
-                clone.scale.set(scale.scale, scale.scale, scale.scale);
-                clones.push(clone);
-                scene.add(clone);
-              })
-              .onUpdate(() => {
-                clone.scale.set(scale.scale, scale.scale, scale.scale);
-              })
-              .chain(
-                new TWEEN.Tween({})
-                  .to({}, 100)
-                  .delay(800 - 25 * i)
-                  .onComplete(() => {
-                    this.options.animationStatus = 0;
-                    this.options.onlyOnce = true;
-                    scene.remove(clone);
-                    this.objects.children.forEach((element: { visible: boolean; }) => {
-                      element.visible = true;
-                    })
-                  })
-              )
-              .start();
-          }
-          this.options.onlyOnce = false;
-        }
-        break;
-      case 7:
-        if (this.options.onlyOnce) {
-          const opacity = { opacity: 0 };
-          for (let i = 0; i < this.objects.children.length ; i++) {
-            let j = 0;
-            this.objects.children[i].children.forEach((element: any) => {
-              element.material.transparent = true;
-              element.material.opacity = 0;
-              new TWEEN.Tween({ opacity: 0 })
-                .to({ opacity: 1 }, 200)
-                .delay(i * 350 + j * 50)
-                .onStart(() => {
-                  console.log(this.objects.children[i].children[j]);
-                })
-                .onUpdate(() => {
-                  element.material.opacity = opacity.opacity;
-                })
-                .onComplete(() => {
-                  element.material.opacity = 1;
-                  this.options.animationStatus = 0;
-                  this.options.onlyOnce = true;
-                })
-                .start();
-              j += 1;
-            });
-          }
-          this.options.onlyOnce = false;
-        }
-        break;
-    }
-  };
-  console.log(obj);
-
-  const html = '<div><div id="translate">Translate</div><div id="scale">Scale</div><div id="opacity">opacity</div><div id="multiply">multiply</div><div id ="apparition1">apparition1</div><div id ="apparition2">apparition2</div></div>'
-  document.getElementById('gui')!.innerHTML = html;
-
-  document.getElementById('gui')!.addEventListener('click', (event) => {
-    console.log((<HTMLDivElement>event.target).id);
-    switch ((<HTMLDivElement>event.target).id) {
-      case 'translate':
-        if (obj.options.animationStatus === 0) {
-          obj.options.animationStatus = 2;
-        }
-        break;
-      case 'scale':
-        if (obj.options.animationStatus === 0) {
-          obj.options.animationStatus = 3;
-        }
-        break;
-      case 'opacity':
-        if (obj.options.animationStatus === 0) {
-          obj.options.animationStatus = 4;
-        }
-        break;
-      case 'multiply':
-        if (obj.options.animationStatus === 0) {
-          obj.options.animationStatus = 6;
-        }
-        break;
-      case 'apparition1':
-        if (obj.options.animationStatus === 0) {
-          obj.options.animationStatus = 5;
-        }
-        break;
-      case 'apparition2':
-        if (obj.options.animationStatus === 0) {
-          obj.options.animationStatus = 7;
-        }
-        break;
-    }
-  })
 }
 
 ////////////////////////////////////////////////////////////////
@@ -767,6 +843,7 @@ async function FontsLoader() {
 
 function addTextThree(textString: string, type: string) {
   const texts = TextLoader(textString, type, allFontsLoaded);
+  texts.name = 'Group';
   let ligneEspaceIndex = 0;
   texts.children.forEach((element) => {
     let lastMaxX = 0;
@@ -775,7 +852,6 @@ function addTextThree(textString: string, type: string) {
         elem.position.set(lastMaxX + 40, 0, 0);
         lastMaxX = elem.position.x + 20;
       } else {
-        console.log(elem);
         const box = new Box3().setFromObject(elem);
         elem.position.set(lastMaxX + 20, 0, 0);
         lastMaxX = elem.position.x + (box.max.x - box.min.x);

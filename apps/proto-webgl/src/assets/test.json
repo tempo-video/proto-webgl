@@ -1,0 +1,799 @@
+[{
+  "objet": "Group",
+  "name": "translation",
+  "animStart": [488],
+  "index": 0,
+  "animations": [{
+    "type": "translation",
+    "options": [],
+    "id": 488,
+    "target": "",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": -300,
+        "y": -300,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": -300,
+        "y": 1600,
+        "z": 0
+      }
+    },
+    "duration": 1600,
+    "easing": "",
+    "delay": 0,
+    "chain": [111, 666]
+  }, {
+    "type": "translation",
+    "options": [],
+    "id": 111,
+    "target": "",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": -300,
+        "y": -300,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": -300,
+        "y": -1600,
+        "z": 0
+      }
+    },
+    "duration": 1600,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }, {
+    "type": "scale",
+    "options": [],
+    "id": 666,
+    "target": "",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 2,
+        "y": 2,
+        "z": 2
+      }
+    },
+    "duration": 1600,
+    "easing": "",
+    "delay": 0,
+    "chain": [719]
+  }, {
+    "type": "translation",
+    "options": [],
+    "id": 719,
+    "target": "",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": -300,
+        "y": -300,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": 200,
+        "y": 0,
+        "z": 100
+      }
+    },
+    "duration": 1600,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }]
+}, {
+  "objet": "Group",
+  "name": "scale",
+  "animStart": [182],
+  "index": 1,
+  "animations": [{
+    "type": "scale",
+    "options": [],
+    "id": 182,
+    "target": "",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 2,
+        "y": 2,
+        "z": 2
+      }
+    },
+    "duration": 1300,
+    "easing": "",
+    "delay": 300,
+    "chain": []
+  }]
+}, {
+  "objet": "Group",
+  "name": "opacity",
+  "animStart": [180],
+  "index": 2,
+  "animations": [{
+    "type": "opacity",
+    "options": [],
+    "id": 180,
+    "target": "",
+    "per": 0,
+    "start": {
+      "opacity": 0
+    },
+    "end": {
+      "opacity": 1
+    },
+    "duration": 1000,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }]
+}, {
+  "objet": "Group",
+  "name": "apparition1",
+  "index": 3,
+  "animStart": [193, 168],
+  "animations": [{
+    "type": "translation",
+    "options": ["clipping"],
+    "id": 193,
+    "target": "",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": 0,
+        "y": -400,
+        "z": 0
+      }
+    },
+    "duration": 1300,
+    "easing": "",
+    "delay": 0,
+    "chain": [150, 132]
+  }, {
+    "type": "scale",
+    "options": [],
+    "id": 168,
+    "target": "group",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 1.3,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 1.8,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "duration": 1000,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }, {
+    "type": "scale",
+    "options": [],
+    "id": 132,
+    "target": "line3",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 1.3,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 1.8,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "duration": 1000,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }, {
+    "type": "translation",
+    "options": ["clipping", "clipping-out"],
+    "id": 150,
+    "target": "",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": 0,
+        "y": -1400,
+        "z": 0
+      }
+    },
+    "duration": 1000,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }]
+}, {
+  "objet": "Group",
+  "name": "duplicate",
+  "index": 3,
+  "animStart": [135],
+  "animations": [{
+    "type": "duplicate",
+    "options": [],
+    "id": 135,
+    "target": "",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 1.3,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "duration": 100,
+    "easing": "",
+    "delay": 50,
+    "chain": []
+  }]
+}, {
+  "objet": "Group",
+  "name": "apparition2",
+  "index": 3,
+  "animStart": [123, 167],
+  "animations": [{
+    "type": "translation",
+    "options": ["clipping"],
+    "id": 123,
+    "target": "",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": 0,
+        "y": -400,
+        "z": 0
+      }
+    },
+    "duration": 1300,
+    "easing": "",
+    "delay": 0,
+    "chain": [189, 173]
+  }, {
+    "type": "scale",
+    "options": [],
+    "id": 167,
+    "target": "group",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 1.3,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 1.8,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "duration": 1000,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }, {
+    "type": "scale",
+    "options": [],
+    "id": 189,
+    "target": "line3",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 1.3,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 1.8,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "duration": 1000,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }, {
+    "type": "translation",
+    "options": [],
+    "id": 173,
+    "target": "",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": 0,
+        "y": -1400,
+        "z": 0
+      }
+    },
+    "duration": 1000,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }]
+}, {
+  "objet": "Group",
+  "name": "succession3",
+  "index": 3,
+  "animStart": [978],
+  "animations": [{
+    "type": "translation",
+    "options": ["clipping"],
+    "id": 193,
+    "target": "",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": 0,
+        "y": -400,
+        "z": 0
+      }
+    },
+    "duration": 1300,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }, {
+    "type": "duplicate",
+    "options": [],
+    "id": 978,
+    "target": "",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 1.3,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "duration": 100,
+    "easing": "",
+    "delay": 40,
+    "chain": [168, 150]
+  }, {
+    "type": "scale",
+    "options": [],
+    "id": 168,
+    "target": "group",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 1.8,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "duration": 1000,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }, {
+    "type": "scale",
+    "options": [],
+    "id": 132,
+    "target": "line3",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 1.3,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 1.3,
+        "y": 1.3,
+        "z": 1.3
+      }
+    },
+    "duration": 1000,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }, {
+    "type": "translation",
+    "options": [],
+    "id": 150,
+    "target": "",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": -250,
+        "y": -250,
+        "z": 0
+      }
+    },
+    "duration": 1000,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }]
+}, {
+  "objet": "Group",
+  "name": "clipping",
+  "animStart": [999],
+  "index": 4,
+  "animations": [{
+    "type": "translation",
+    "options": ["clipping"],
+    "id": 999,
+    "target": "",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": -300,
+        "y": 200,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": -300,
+        "y": -300,
+        "z": 0
+      }
+    },
+    "duration": 600,
+    "easing": "",
+    "delay": 0,
+    "chain": [888]
+  }, {
+    "type": "translation",
+    "options": ["clipping", "clipping-out"],
+    "id": 888,
+    "target": "",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": -300,
+        "y": -300,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": -300,
+        "y": -1200,
+        "z": 0
+      }
+    },
+    "duration": 600,
+    "easing": "",
+    "delay": 200,
+    "chain": []
+  }]
+}, {
+  "objet": "Group",
+  "name": "test line per line",
+  "animStart": [999],
+  "index": 4,
+  "animations": [{
+    "type": "translation",
+    "options": [],
+    "id": 999,
+    "target": "line",
+    "per": 0,
+    "start": {
+      "translate": {
+        "x": -300,
+        "y": 1000,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": -300,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "duration": 400,
+    "easing": "",
+    "delay": 80,
+    "chain": [385]
+  }, {
+    "type": "translation",
+    "options": [],
+    "id": 385,
+    "target": "line",
+    "per": 1,
+    "start": {
+      "translate": {
+        "x": -300,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": -450,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "duration": 400,
+    "easing": "",
+    "delay": 80,
+    "chain": []
+  }]
+}, {
+  "objet": "square",
+  "name": "square scale",
+  "animStart": [128],
+  "index": 4,
+  "animations": [{
+    "type": "scale",
+    "options": [],
+    "id": 128,
+    "target": "",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 0.2,
+        "y": 0.05,
+        "z": 1
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 2,
+        "y": 0.05,
+        "z": 1
+      }
+    },
+    "duration": 400,
+    "easing": "",
+    "delay": 0,
+    "chain": [897, 111]
+  }, {
+    "type": "scale",
+    "options": [],
+    "id": 897,
+    "target": "",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 2,
+        "y": 0.05,
+        "z": 1
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 2,
+        "y": 0.05,
+        "z": 1
+      }
+    },
+    "duration": 200,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }, {
+    "type": "scale",
+    "options": [],
+    "id": 111,
+    "target": "",
+    "per": 2,
+    "start": {
+      "scale": {
+        "x": 2,
+        "y": 0.05,
+        "z": 1
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 2,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "duration": 400,
+    "easing": "",
+    "delay": 200,
+    "chain": []
+  }]
+}, {
+  "objet": "Group",
+  "name": "reset",
+  "animStart": [128],
+  "index": 4,
+  "animations": [{
+    "type": "scale",
+    "options": [],
+    "id": 128,
+    "target": "",
+    "per": 0,
+    "start": {
+      "scale": {
+        "x": 2,
+        "y": 2,
+        "z": 1
+      }
+    },
+    "end": {
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "duration": 400,
+    "easing": "",
+    "delay": 0,
+    "chain": []
+  }]
+}, {
+  "objet": "Group",
+  "name": "test children",
+  "animStart": [128, 385],
+  "index": 4,
+  "animations": [{
+    "type": "opacity",
+    "options": ["visible-in"],
+    "id": 128,
+    "target": "",
+    "per": 2,
+    "start": {
+      "opacity": 0
+    },
+    "end": {
+      "opacity" : 1
+    },
+    "duration": 400,
+    "easing": "",
+    "delay": 30,
+    "chain": []
+  }, {
+    "type": "translation",
+    "options": [],
+    "id": 385,
+    "target": "line",
+    "per": 1,
+    "start": {
+      "translate": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "end": {
+      "translate": {
+        "x": -300,
+        "y": 0,
+        "z": 0
+      }
+    },
+    "duration": 400,
+    "easing": "",
+    "delay": 350,
+    "chain": []
+  }]
+}, {
+  "objet": "Group",
+  "name": "test anime",
+  "animStart": [128],
+  "index": 4,
+  "animations": [{
+    "type": "anime",
+    "options": [],
+    "id": 128,
+    "target": "",
+    "per": 2,
+    "start": {
+      "x": 0,"y": 0,"z": 0
+    },
+    "end": {
+      "x": 200,"y": -300,"z": 0
+    },
+    "duration": 400,
+    "easing": "easeInOutBack",
+    "delay": 30,
+    "chain": []
+  }]
+}]

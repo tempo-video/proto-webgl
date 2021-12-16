@@ -1,6 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "files": [],
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true
+  },
   "include": [],
   "references": [
     {

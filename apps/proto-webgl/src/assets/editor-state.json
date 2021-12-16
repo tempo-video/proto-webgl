@@ -43,12 +43,12 @@
         "name": "square",
         "width": 500,
         "height": 1000,
-        "depth": 5,
+        "depth": -2,
         "transform": {
           "translation": {
             "x": 0,
             "y": 0,
-            "z": 0
+            "z": 2
           },
           "rotation": {
             "x": 0,
