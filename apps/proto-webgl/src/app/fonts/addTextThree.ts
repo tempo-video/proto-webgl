@@ -39,8 +39,10 @@ function TextLoader(
   console.log(linesL);
 
   const textGroup = new Group();
+  textGroup.name = 'sentence';
   linesL.forEach(element => {
     const lineGroup = new Group();
+    lineGroup.name = 'line';
     element.forEach(elem => {
       const fontIndex = allFontsLoaded.findIndex((element) => {
         return element.name === type;
@@ -58,7 +60,7 @@ function TextLoader(
         side: DoubleSide,
       });
       const text = new Mesh(textGeo, textMaterial);
-      text.name = elem; // Changer sur le id du texte
+      text.name = 'letter'; // Changer sur le id du texte
       text.position.set(-200, 0, 0);
       text.rotation.set(Math.PI, 0, 0);
       lineGroup.add(text);

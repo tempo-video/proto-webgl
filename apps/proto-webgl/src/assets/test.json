@@ -743,7 +743,7 @@
       "opacity": 0
     },
     "end": {
-      "opacity" : 1
+      "opacity": 1
     },
     "duration": 400,
     "easing": "",
@@ -775,7 +775,7 @@
     "chain": []
   }]
 }, {
-  "objet": "Group",
+  "objet": "sentence",
   "name": "test anime",
   "animStart": [128],
   "index": 4,
@@ -783,13 +783,19 @@
     "type": "anime",
     "options": [],
     "id": 128,
-    "target": "",
+    "target": "letter",
     "per": 2,
     "start": {
-      "x": 0,"y": 0,"z": 0
+      "tx": 0,
+      "ty": 500,
+      "tz": 0,
+      "opacity": 1
     },
     "end": {
-      "x": 200,"y": -300,"z": 0
+      "tx": 0,
+      "ty": -300,
+      "tz": 0,
+      "opacity": 1
     },
     "duration": 400,
     "easing": "easeInOutBack",

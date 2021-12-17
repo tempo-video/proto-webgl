@@ -24,7 +24,15 @@ import {
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import * as data from '../assets/editor-state.json';
-import { fromEvent, firstValueFrom, of, from, filter, Observable, elementAt } from 'rxjs';
+import {
+  fromEvent,
+  firstValueFrom,
+  of,
+  from,
+  filter,
+  Observable,
+  elementAt,
+} from 'rxjs';
 import { map } from 'rxjs';
 import addSubtitles from './subtitles/addSubtitles';
 import {
@@ -271,125 +279,68 @@ function findAnimations(animationList: animation[], listId: number[]) {
 function animCreate(
   groupAnimation: groupAnimation,
   elements: animation[],
-  object: Object3D,
-  parentTween?: TWEEN.Tween<any>
+  object: Object3D
 ) {
-  const groupAnimToChain: TWEEN.Group = new TWEEN.Group();
-  elements.forEach((element: animation) => {
+  const tl = anime.timeline({ easing: 'easeOutExpo', duration: 2000 });
+  elements.forEach((element: animation, index) => {
     let tween: any = switchType(element, object as Mesh);
     console.log('tween', tween);
-    tween.play();
-    /*if (tween!.getAll) {
-      let tweens = tween.getAll();
-      tweens.forEach((elementTween: TWEEN.Tween<any>) => {
-        if (element.chain) {
-          let animsToChain = findAnimations(
-            groupAnimation.animations!,
-            element.chain
-          );
-          animCreate(groupAnimation, animsToChain, object, elementTween);
-        }
-        if (parentTween) {
-          groupAnimToChain.add(elementTween);
-        } else {
-          elementTween.start();
-        }
-      });
-    } else {
-      if (element.chain) {
-        animCreate(
-          groupAnimation,
-          findAnimations(groupAnimation.animations!, element.chain),
-          object,
-          tween
-        );
-      }
-      if (parentTween) {
-        groupAnimToChain.add(tween);
-      } else {
-        tween?.start();
-      }
-    }*/
+    tl.add(tween);
   });
-  let animstochain = groupAnimToChain.getAll();
-  if (parentTween !== undefined && animstochain[0]) {
-    console.log(parentTween, 'tween to chain first : ', animstochain[0]);
-    /*parentTween.chain(animstochain[0]);
-
-    animstochain[0].onStart(() => {
-      for (let i = 1; i < animstochain.length; i++) {
-        animstochain[i].start();
-      }
-    });*/
-    ////////// a changer trouvez autre choses c moches la ///////////////
-
-    switch (animstochain.length) {
-      case 1:
-        parentTween.chain(animstochain[0]);
-        break;
-      case 2:
-        parentTween.chain(animstochain[0], animstochain[1]);
-        break;
-      case 3:
-        parentTween.chain(animstochain[0], animstochain[1], animstochain[2]);
-        break;
-      case 4:
-        parentTween.chain(
-          animstochain[0],
-          animstochain[1],
-          animstochain[2],
-          animstochain[3]
-        );
-        break;
-      case 5:
-        parentTween.chain(
-          animstochain[0],
-          animstochain[1],
-          animstochain[2],
-          animstochain[3],
-          animstochain[4]
-        );
-        break;
-      case 6:
-        parentTween.chain(
-          animstochain[0],
-          animstochain[1],
-          animstochain[2],
-          animstochain[3],
-          animstochain[4],
-          animstochain[5]
-        );
-        break;
-    }
-  }
+  console.log('tl : ', tl);
+  tl.play();
 }
 
 function switchType(element: animation, object: Mesh) {
   switch (element.type) {
     case 'anime':
-      var coords = [
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 0 },
-      ];
+      const hello: Object3D[] = [];
 
-      return anime({
+      object.traverse((child) => {
+        if (child.name === element.target) {
+          hello.push(child);
+        }
+      });
+
+      console.log('all chil with name : ', hello);
+
+      const coords: any[] = [];
+
+      hello.forEach(() => {
+        coords.push(JSON.parse(JSON.stringify(element.start)));
+      });
+
+      const animation = {
         targets: coords,
-        x: element.end.x,
-        y: element.end.y,
-        z: element.end.z,
+        tx: element.end.tx,
+        ty: element.end.ty,
+        tz: element.end.tz,
+        opacity: element.end.opacity,
         round: 1,
         easing: element.easing,
         duration: element.duration,
-        autoplay : false,
-        update: function () {
-          object.children.forEach((element, index) => {
-            element.position.set(coords[index].x, coords[index].y + 200 * index, coords[index].z);
-          })
+        begin: function () {
+          console.log('hello anime start() : ', coords[0]);
+          object.children.forEach((element) => {
+            element.children.forEach((letters: any) => {
+              letters.material.transparent = true;
+            });
+          });
         },
-        delay: anime.stagger(200),
-      });
+        update: function () {
+          hello.forEach((element : any, index) => {
+            element.position.set(
+              coords[index].tx,
+              coords[index].ty,
+              coords[index].tz
+            );
+            element.material.opacity = coords[index].opacity;
+          });
+        },
+        delay: anime.stagger(50),
+      };
+
+      return animation;
     case 'translation':
       if (element.target === 'line') {
         let tweenGroup: TWEEN.Group = new TWEEN.Group();
@@ -528,32 +479,6 @@ function switchType(element: animation, object: Mesh) {
           });
         return tweenTranslation;
       }
-    case 'scale':
-      let positionScale = JSON.parse(JSON.stringify(element.start));
-      let tweenScale = new TWEEN.Tween(positionScale)
-        .to(element.end, element.duration)
-        .easing(TWEEN.Easing.Back.InOut)
-        .delay(element.delay)
-        .onStart(() => {
-          object.scale.set(
-            element.start.scale.x,
-            element.start.scale.y,
-            element.start.scale.z
-          );
-          //object.position.set(0, 0, 0);
-        })
-        .onUpdate(() => {
-          console.log(positionScale.scale.y);
-          object.scale.set(
-            positionScale.scale.x,
-            positionScale.scale.y,
-            positionScale.scale.z
-          );
-        })
-        .onComplete(() => {
-          //object.scale.set(1, 1, 1);
-        });
-      return tweenScale;
     case 'duplicate':
       object.children.forEach((element: { visible: boolean }) => {
         element.visible = false;
@@ -628,43 +553,6 @@ function switchType(element: animation, object: Mesh) {
       }
       console.log(tweenDuplicate.getAll());
       return tweenDuplicate;
-    case 'opacity':
-      let positionOpacity = JSON.parse(JSON.stringify(element.start));
-      let objet: Mesh[] = [object as Mesh];
-      let objets: any[] = [];
-      while (!objet[0].material) {
-        objet.forEach((element) => {
-          element.children?.forEach((element) => {
-            objets.push(element);
-          });
-        });
-        objet = [];
-        objet = objets;
-        objets = [];
-      }
-      if (element.options.includes('visible-in')) {
-        objet.forEach((objet: any) => {
-          objet.material.opacity = element.start.opacity;
-          objet.material.transparent = true;
-        });
-      }
-      let tweenOpacity = new TWEEN.Group();
-      objet.forEach((objet: any, index) => {
-        tweenOpacity.add(
-          new TWEEN.Tween(positionOpacity)
-            .to(element.end, element.duration)
-            .easing(TWEEN.Easing.Quartic.InOut)
-            .delay(element.delay * index)
-            .onUpdate(() => {
-              objet.material.opacity = positionOpacity.opacity;
-            })
-            .onComplete(() => {
-              //objet.material.opacity.set(1, 1, 1);
-              console.log(element.start, element.end);
-            })
-        );
-      });
-      return tweenOpacity;
   }
 }
 
@@ -843,7 +731,6 @@ async function FontsLoader() {
 
 function addTextThree(textString: string, type: string) {
   const texts = TextLoader(textString, type, allFontsLoaded);
-  texts.name = 'Group';
   let ligneEspaceIndex = 0;
   texts.children.forEach((element) => {
     let lastMaxX = 0;

@@ -73,6 +73,7 @@ video{
     #gui{
       height: 100%;
       width: 30vw;
+      display: flex;
       ul{
         list-style-type: none;
         display: flex;
@@ -82,7 +83,7 @@ video{
         height: 100%;
         padding: 0;
         margin: 0;
-        width: fit-content;
+        width: inherit;
         li{
           width: fit-content;
           img{
